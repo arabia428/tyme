@@ -1,2509 +1,768 @@
 <!DOCTYPE html><html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Control Horario - Neon 3D Native App</title>  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:ital,wght@1,700;1,900&display=swap" rel="stylesheet">  <style>
-    :root {
-      --bg-dark: #0a0c16;
-      --card-bg: rgba(20, 25, 45, 0.75);
-      --neon-green: #00ff88;
-      --neon-green-glow: rgba(0, 255, 136, 0.45);
-      --neon-red: #ff2a6d;
-      --neon-red-glow: rgba(255, 42, 109, 0.45);
-      --neon-cyan: #05d9e8;
-      --neon-cyan-glow: rgba(5, 217, 232, 0.45);
-      --neon-purple: #9d4edd;
-      --text-light: #f0f3f8;
-      --text-dim: #8a99ad;
-      --glass-border: rgba(255, 255, 255, 0.12);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-tap-highlight-color: transparent !important;
-      outline: none !important;
-    }
-
-    button, input, select {
-      -webkit-tap-highlight-color: transparent !important;
-      outline: none !important;
-    }
-
-    body {
-      background-color: var(--bg-dark);
-      background-image:
-        radial-gradient(circle at 10% 20%, rgba(5, 217, 232, 0.08) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(157, 78, 221, 0.08) 0%, transparent 40%);
-      color: var(--text-light);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding-bottom: 90px;
-      overflow-x: hidden;
-    }
-
-    .app-container {
-      width: 100%;
-      max-width: 440px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-    }
-
-    .page {
-      display: none;
-      flex-direction: column;
-      gap: 18px;
-      animation: fadeIn 0.25s ease-out;
-    }
-
-    .page.active {
-      display: flex;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(4px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .hero-clock-section {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 8px 0;
-      gap: 14px;
-    }
-
-    .big-3d-button {
-      width: 220px;
-      height: 220px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 35% 30%, #1a253d, #080c18);
-      border: 3px solid var(--neon-green);
-      color: var(--text-light);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-
-      box-shadow:
-        0 0 25px var(--neon-green-glow),
-        inset 0 0 18px var(--neon-green-glow),
-        0 14px 28px rgba(0, 0, 0, 0.75);
-
-      transition:
-        transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
-        box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-        border-color 0.35s ease;
-
-      position: relative;
-      padding: 10px;
-
-      /* Mejora de composición y fluidez */
-      transform: translateZ(0);
-      backface-visibility: hidden;
-      will-change: transform, box-shadow;
-    }
-
-    .big-3d-button:active {
-      transform: scale(0.94) translateZ(0);
-
-      box-shadow:
-        0 0 15px var(--neon-green-glow),
-        inset 0 0 25px var(--neon-green-glow),
-        0 6px 12px rgba(0, 0, 0, 0.85);
-    }
-
-    .big-3d-button.working {
-      border-color: var(--neon-red);
-
-      box-shadow:
-        0 0 32px var(--neon-red-glow),
-        inset 0 0 22px var(--neon-red-glow),
-        0 14px 28px rgba(0, 0, 0, 0.75);
-
-      animation: pulse-red-glow 2.8s ease-in-out infinite alternate;
-    }
-
-    @keyframes pulse-red-glow {
-      0% {
-        box-shadow:
-          0 0 22px var(--neon-red-glow),
-          inset 0 0 14px var(--neon-red-glow),
-          0 14px 28px rgba(0, 0, 0, 0.75);
-      }
-
-      100% {
-        box-shadow:
-          0 0 44px var(--neon-red-glow),
-          inset 0 0 30px var(--neon-red-glow),
-          0 14px 28px rgba(0, 0, 0, 0.75);
-      }
-    }
-
-    .big-3d-button .btn-icon {
-      font-size: 30px;
-      margin-bottom: 2px;
-      filter: drop-shadow(0 0 6px rgba(255,255,255,0.4));
-      transform: translateZ(0);
-    }
-
-    .big-3d-button .btn-title {
-      font-size: 13px;
-      font-weight: 900;
-      letter-spacing: 1.2px;
-      text-transform: uppercase;
-      text-align: center;
-      color: #ffffff;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-    }
-
-    .timer-label {
-      font-size: 9px;
-      font-weight: 800;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: var(--text-dim);
-      margin-top: 6px;
-      opacity: 0.85;
-    }
-
-    /*
-      RELOJ OPTIMIZADO
-      ----------------
-      Se utiliza composición propia de GPU para evitar pequeños
-      tirones durante las animaciones.
-    */
-    .timer-display {
-      font-family: 'Orbitron', monospace;
-      font-style: italic;
-      font-weight: 900;
-      font-size: 19px;
-      color: var(--neon-green);
-
-      text-shadow:
-        0 0 2px #ffffff,
-        0 0 8px var(--neon-green-glow),
-        0 0 16px var(--neon-green-glow);
-
-      margin-top: 2px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 1px;
-      letter-spacing: 0.5px;
-
-      transform: translateZ(0);
-      backface-visibility: hidden;
-      will-change: contents;
-    }
-
-    .big-3d-button.working .timer-display {
-      color: var(--neon-cyan);
-
-      text-shadow:
-        0 0 2px #ffffff,
-        0 0 8px var(--neon-cyan-glow),
-        0 0 16px var(--neon-cyan-glow);
-    }
-
-    .colon-blink {
-      animation: blink-soft 1s infinite ease-in-out;
-      transform: translateZ(0);
-      will-change: opacity, filter;
-    }
-
-    @keyframes blink-soft {
-      0%, 100% {
-        opacity: 1;
-        filter: drop-shadow(0 0 3px var(--neon-green));
-      }
-
-      50% {
-        opacity: 0.42;
-        filter: drop-shadow(0 0 1px transparent);
-      }
-    }
-
-    /*
-      Cada segundo entra con una microanimación.
-      Ya no se fuerza un reflow con offsetWidth.
-    */
-    .second-tick {
-      display: inline-block;
-      min-width: 23px;
-      text-align: center;
-      transform: translate3d(0, 0, 0);
-      transition:
-        transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
-        opacity 0.12s ease,
-        filter 0.18s ease;
-
-      will-change: transform, opacity, filter;
-    }
-
-    .second-tick.tick-anim {
-      animation: smooth-tick 0.34s cubic-bezier(0.22, 1, 0.36, 1);
-    }
-
-    @keyframes smooth-tick {
-      0% {
-        transform: translate3d(0, 3px, 0) scale(0.96);
-        opacity: 0.45;
-        filter: brightness(1);
-      }
-
-      45% {
-        transform: translate3d(0, -1px, 0) scale(1.075);
-        opacity: 1;
-        filter: brightness(1.45);
-      }
-
-      100% {
-        transform: translate3d(0, 0, 0) scale(1);
-        opacity: 1;
-        filter: brightness(1);
-      }
-    }
-
-    .btn-manual-edit {
-      background: rgba(15, 22, 42, 0.75);
-      border: 1px solid var(--neon-cyan);
-      color: var(--neon-cyan);
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: bold;
-      letter-spacing: 0.5px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      box-shadow: 0 0 10px rgba(5, 217, 232, 0.15);
-      transition: all 0.2s ease;
-    }
-
-    .btn-manual-edit:active {
-      transform: scale(0.95);
-      background: var(--neon-cyan);
-      color: var(--bg-dark);
-      box-shadow: 0 0 15px var(--neon-cyan-glow);
-    }
-
-    .calendar-card {
-      background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--glass-border);
-      border-radius: 22px;
-      padding: 16px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    }
-
-    .calendar-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 14px;
-    }
-
-    .calendar-header h3 {
-      font-size: 16px;
-      color: var(--neon-cyan);
-      text-transform: capitalize;
-    }
-
-    .month-selector-controls {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .month-select {
-      background: rgba(10, 15, 30, 0.9);
-      color: var(--text-light);
-      border: 1px solid var(--glass-border);
-      padding: 6px 10px;
-      border-radius: 12px;
-      font-size: 13px;
-      cursor: pointer;
-    }
-
-    .nav-btn {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--glass-border);
-      color: var(--text-light);
-      width: 30px;
-      height: 30px;
-      border-radius: 10px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .weekdays-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      text-align: center;
-      font-size: 12px;
-      font-weight: bold;
-      color: var(--text-dim);
-      margin-bottom: 10px;
-    }
-
-    .days-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 6px;
-      position: relative;
-    }
-
-    .day-cell {
-      min-height: 52px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      padding: 4px 2px;
-      border-radius: 12px;
-      font-size: 13px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      cursor: pointer;
-      position: relative;
-      transition: all 0.15s ease;
-      z-index: 2;
-    }
-
-    .day-cell:not(.empty):active {
-      transform: scale(0.92);
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    .day-cell.empty {
-      background: transparent;
-      border-color: transparent;
-      cursor: default;
-    }
-
-    .day-cell.worked {
-      background: rgba(0, 255, 136, 0.1);
-      border-color: rgba(0, 255, 136, 0.5);
-      color: var(--neon-green);
-      font-weight: bold;
-      box-shadow: 0 0 10px rgba(0, 255, 136, 0.12);
-    }
-
-    .day-cell.today {
-      border-color: var(--neon-cyan);
-      box-shadow: 0 0 8px rgba(5, 217, 232, 0.3);
-    }
-
-    .green-dot {
-      width: 6px;
-      height: 6px;
-      background-color: var(--neon-green);
-      border-radius: 50%;
-      box-shadow: 0 0 6px var(--neon-green);
-      position: absolute;
-      top: 4px;
-      right: 4px;
-    }
-
-    .jornada-badge {
-      font-size: 8px;
-      font-weight: bold;
-      background: rgba(0, 255, 136, 0.2);
-      color: var(--neon-green);
-      border: 1px solid var(--neon-green);
-      border-radius: 6px;
-      padding: 1px 3px;
-      line-height: 1;
-      margin-top: 2px;
-    }
-
-    .day-cell.overnight-end {
-      background: rgba(5, 217, 232, 0.1);
-      border-color: rgba(5, 217, 232, 0.4);
-    }
-
-    .arrival-tag {
-      font-size: 8px;
-      color: var(--neon-cyan);
-      font-weight: bold;
-    }
-
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s ease;
-    }
-
-    .modal-overlay.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .glass-modal {
-      background: rgba(18, 24, 45, 0.95);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      width: 90%;
-      max-width: 360px;
-      border-radius: 22px;
-      padding: 20px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 20px rgba(5, 217, 232, 0.15);
-      transform: scale(0.9);
-      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    .modal-overlay.active .glass-modal {
-      transform: scale(1);
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-      border-bottom: 1px solid var(--glass-border);
-      padding-bottom: 10px;
-    }
-
-    .modal-header h4 {
-      color: var(--neon-cyan);
-      font-size: 15px;
-    }
-
-    .close-btn {
-      background: none;
-      border: none;
-      color: var(--text-dim);
-      font-size: 22px;
-      cursor: pointer;
-      line-height: 1;
-    }
-
-    .shift-summary-card {
-      background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(5, 217, 232, 0.15));
-      border: 1px solid var(--neon-green);
-      border-radius: 12px;
-      padding: 10px 12px;
-      margin-bottom: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      box-shadow: 0 0 12px rgba(0, 255, 136, 0.15);
-    }
-
-    .shift-summary-title {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--neon-green);
-      font-weight: bold;
-    }
-
-    .shift-summary-times {
-      font-size: 14px;
-      font-weight: bold;
-      color: #fff;
-    }
-
-    .arrival-info-box {
-      background: rgba(5, 217, 232, 0.12);
-      border: 1px solid var(--neon-cyan);
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-size: 12px;
-      color: var(--neon-cyan);
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      box-shadow: 0 0 10px rgba(5, 217, 232, 0.15);
-      margin-bottom: 10px;
-    }
-
-    .modal-body {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      font-size: 13px;
-    }
-
-    .form-group {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: rgba(255, 255, 255, 0.03);
-      padding: 8px 12px;
-      border-radius: 10px;
-      border: 1px solid var(--glass-border);
-    }
-
-    .form-group label {
-      color: var(--text-dim);
-      font-size: 12px;
-    }
-
-    .form-input {
-      background: rgba(10, 15, 30, 0.8);
-      border: 1px solid var(--glass-border);
-      color: var(--neon-green);
-      padding: 5px 8px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: bold;
-      text-align: center;
-    }
-
-    .overnight-badge {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 12px;
-      background: rgba(5, 217, 232, 0.1);
-      border: 1px solid var(--neon-cyan);
-      border-radius: 10px;
-      color: var(--neon-cyan);
-      font-size: 12px;
-      font-weight: bold;
-    }
-
-    .night-pay-box {
-      background: rgba(157, 78, 221, 0.12);
-      border: 1px solid var(--neon-purple);
-      border-radius: 12px;
-      padding: 10px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .night-pay-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 6px;
-    }
-
-    .btn-action {
-      flex: 1;
-      padding: 10px;
-      border-radius: 12px;
-      border: none;
-      font-weight: bold;
-      font-size: 12px;
-      cursor: pointer;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .btn-save {
-      background: var(--neon-green);
-      color: #000;
-      box-shadow: 0 0 12px var(--neon-green-glow);
-    }
-
-    .btn-delete {
-      background: rgba(255, 42, 109, 0.2);
-      border: 1px solid var(--neon-red);
-      color: var(--neon-red);
-    }
-
-    .page-title {
-      font-size: 18px;
-      color: var(--neon-cyan);
-      text-align: center;
-      margin-bottom: 5px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .year-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .month-card {
-      background: var(--card-bg);
-      border: 1px solid var(--glass-border);
-      backdrop-filter: blur(12px);
-      border-radius: 16px;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .month-card-header {
-      display: flex;
-      justify-content: space-between;
-      font-size: 13px;
-      font-weight: bold;
-    }
-
-    .bar-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .bar-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 11px;
-    }
-
-    .bar-label {
-      width: 60px;
-      color: var(--text-dim);
-    }
-
-    .bar-track {
-      flex: 1;
-      height: 10px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 10px;
-      overflow: hidden;
-    }
-
-    .bar-fill {
-      height: 100%;
-      border-radius: 10px;
-      transition: width 0.4s ease;
-    }
-
-    .bar-fill.work {
-      background: linear-gradient(90deg, #00b359, var(--neon-green));
-      box-shadow: 0 0 10px var(--neon-green-glow);
-    }
-
-    .bar-fill.rest {
-      background: linear-gradient(90deg, #b3003b, var(--neon-red));
-      box-shadow: 0 0 10px var(--neon-red-glow);
-    }
-
-    .bar-val {
-      width: 45px;
-      text-align: right;
-      font-size: 11px;
-      font-weight: bold;
-    }
-
-    .bottom-nav {
-      position: fixed;
-      bottom: 15px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: calc(100% - 32px);
-      max-width: 400px;
-      background: rgba(15, 20, 38, 0.85);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid var(--glass-border);
-      border-radius: 30px;
-      padding: 6px;
-      display: flex;
-      justify-content: space-around;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
-      z-index: 100;
-    }
-
-    .nav-item {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      background: transparent;
-      color: var(--text-dim);
-      font-size: 12px;
-      font-weight: bold;
-      border-radius: 20px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: all 0.2s;
-    }
-
-    .nav-item.active {
-      color: var(--bg-dark);
-      background: var(--neon-cyan);
-      box-shadow: 0 0 15px rgba(5, 217, 232, 0.6);
-    }
-  </style></head><body>  <div class="app-container"><div id="page-1" class="page active">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Control Horario - Neon 3D Native App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:ital,wght@1,700;1,900&display=swap" rel="stylesheet">
+<style>
+:root{--bg-dark:#0a0c16;--card-bg:rgba(20,25,45,.75);--neon-green:#00ff88;--neon-green-glow:rgba(0,255,136,.45);--neon-red:#ff2a6d;--neon-red-glow:rgba(255,42,109,.45);--neon-cyan:#05d9e8;--neon-cyan-glow:rgba(5,217,232,.45);--neon-purple:#9d4edd;--neon-orange:#ff9100;--text-light:#f0f3f8;--text-dim:#8a99ad;--glass-border:rgba(255,255,255,.12)}
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent!important;outline:none!important}
+body{background-color:var(--bg-dark);background-image:radial-gradient(circle at 10% 20%,rgba(5,217,232,.08) 0%,transparent 40%),radial-gradient(circle at 90% 80%,rgba(157,78,221,.08) 0%,transparent 40%);color:var(--text-light);min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding-bottom:90px;overflow-x:hidden}
+.app-container{width:100%;max-width:440px;padding:16px;display:flex;flex-direction:column;gap:18px}
+.page{display:none;flex-direction:column;gap:18px;animation:fadeIn .25s ease-out}
+.page.active{display:flex}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.hero-clock-section{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 0;gap:12px}
+.big-3d-button{width:220px;height:220px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#1a253d,#080c18);border:3px solid var(--neon-green);color:var(--text-light);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 25px var(--neon-green-glow),inset 0 0 18px var(--neon-green-glow),0 14px 28px rgba(0,0,0,.75);transition:transform .18s cubic-bezier(.22,1,.36,1),box-shadow .35s cubic-bezier(.22,1,.36,1),border-color .35s ease;position:relative;padding:10px;transform:translateZ(0);backface-visibility:hidden;will-change:transform,box-shadow}
+.big-3d-button:active{transform:scale(.94) translateZ(0);box-shadow:0 0 15px var(--neon-green-glow),inset 0 0 25px var(--neon-green-glow),0 6px 12px rgba(0,0,0,.85)}
+.big-3d-button.working{border-color:var(--neon-red);box-shadow:0 0 32px var(--neon-red-glow),inset 0 0 22px var(--neon-red-glow),0 14px 28px rgba(0,0,0,.75);animation:pulse-red-glow 2.8s ease-in-out infinite alternate}
+@keyframes pulse-red-glow{0%{box-shadow:0 0 22px var(--neon-red-glow),inset 0 0 14px var(--neon-red-glow),0 14px 28px rgba(0,0,0,.75)}100%{box-shadow:0 0 44px var(--neon-red-glow),inset 0 0 30px var(--neon-red-glow),0 14px 28px rgba(0,0,0,.75)}}
+.btn-icon{font-size:30px;margin-bottom:2px;filter:drop-shadow(0 0 6px rgba(255,255,255,.4))}
+.btn-title{font-size:13px;font-weight:900;letter-spacing:1.2px;text-transform:uppercase;text-align:center;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,.8)}
+.timer-label{font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-top:6px;opacity:.85}
+.timer-display{font-family:'Orbitron',monospace;font-style:italic;font-weight:900;font-size:19px;color:var(--neon-green);text-shadow:0 0 2px #fff,0 0 8px var(--neon-green-glow),0 0 16px var(--neon-green-glow);margin-top:2px;display:flex;align-items:center;justify-content:center;gap:1px;letter-spacing:.5px}
+.big-3d-button.working .timer-display{color:var(--neon-cyan);text-shadow:0 0 2px #fff,0 0 8px var(--neon-cyan-glow),0 0 16px var(--neon-cyan-glow)}
+.colon-blink{animation:blink-soft 1s infinite ease-in-out}
+@keyframes blink-soft{0%,100%{opacity:1}50%{opacity:.42}}
+.second-tick{display:inline-block;min-width:23px;text-align:center}
+.second-tick.tick-anim{animation:smooth-tick .34s cubic-bezier(.22,1,.36,1)}
+@keyframes smooth-tick{0%{transform:translate3d(0,3px,0) scale(.96);opacity:.45}45%{transform:translate3d(0,-1px,0) scale(1.075);opacity:1;filter:brightness(1.45)}100%{transform:none;opacity:1;filter:brightness(1)}}
+.since-label{font-size:14px;font-weight:800;letter-spacing:.6px;color:var(--neon-cyan);text-shadow:0 0 8px var(--neon-cyan-glow)}
+.since-label.rest{color:var(--neon-green);text-shadow:0 0 8px var(--neon-green-glow)}
+.btn-manual-edit{background:rgba(15,22,42,.75);border:1px solid var(--neon-cyan);color:var(--neon-cyan);padding:6px 14px;border-radius:20px;font-size:11px;font-weight:bold;letter-spacing:.5px;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 0 10px rgba(5,217,232,.15);transition:all .2s ease}
+.btn-manual-edit:active{transform:scale(.95);background:var(--neon-cyan);color:var(--bg-dark)}
+.alert-banner{position:sticky;top:8px;z-index:60;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#ff9100,#ff5e00);color:#1a0d00;border-radius:16px;padding:10px 12px;box-shadow:0 0 20px rgba(255,140,0,.55);animation:warnPulse 2s ease-in-out infinite alternate}
+@keyframes warnPulse{from{box-shadow:0 0 10px rgba(255,140,0,.4)}to{box-shadow:0 0 26px rgba(255,140,0,.85)}}
+.ab-main{flex:1;display:flex;gap:10px;align-items:center;cursor:pointer;min-width:0}
+.ab-ico{font-size:26px}.ab-main b{display:block;font-size:13px}.ab-main small{display:block;font-size:11px;font-weight:600;opacity:.85}
+.ab-x{background:rgba(0,0,0,.3);border:none;color:#fff;width:22px;height:22px;border-radius:50%;font-size:14px;line-height:1;cursor:pointer;flex-shrink:0}
+.calendar-card{background:var(--card-bg);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--glass-border);border-radius:22px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.calendar-header h3{font-size:16px;color:var(--neon-cyan);text-transform:capitalize}
+.month-selector-controls{display:flex;align-items:center;gap:6px}
+.month-select{background:rgba(10,15,30,.9);color:var(--text-light);border:1px solid var(--glass-border);padding:6px 10px;border-radius:12px;font-size:13px;cursor:pointer}
+.nav-btn{background:rgba(255,255,255,.05);border:1px solid var(--glass-border);color:var(--text-light);width:30px;height:30px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.weekdays-grid{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:12px;font-weight:bold;color:var(--text-dim);margin-bottom:10px}
+.days-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;position:relative}
+.day-cell{min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:4px 2px;border-radius:12px;font-size:13px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);cursor:pointer;position:relative;transition:all .15s ease;z-index:2}
+.day-cell:not(.empty):active{transform:scale(.92);background:rgba(255,255,255,.1)}
+.day-cell.empty{background:transparent;border-color:transparent;cursor:default}
+.day-cell.worked{background:rgba(0,255,136,.1);border-color:rgba(0,255,136,.5);color:var(--neon-green);font-weight:bold;box-shadow:0 0 10px rgba(0,255,136,.12)}
+.day-cell.live{background:rgba(255,42,109,.12);border-color:var(--neon-red);color:var(--neon-red)}
+.day-cell.today{border-color:var(--neon-cyan);box-shadow:0 0 8px rgba(5,217,232,.3)}
+.green-dot{width:6px;height:6px;background-color:var(--neon-green);border-radius:50%;box-shadow:0 0 6px var(--neon-green);position:absolute;top:4px;right:4px}
+.live .green-dot{background-color:var(--neon-red);box-shadow:0 0 6px var(--neon-red)}
+.jornada-badge{font-size:8px;font-weight:bold;background:rgba(0,255,136,.2);color:var(--neon-green);border:1px solid var(--neon-green);border-radius:6px;padding:1px 3px;line-height:1;margin-top:2px}
+.live .jornada-badge{background:rgba(255,42,109,.2);color:var(--neon-red);border-color:var(--neon-red)}
+.day-cell.overnight-end{background:rgba(5,217,232,.1);border-color:rgba(5,217,232,.4)}
+.arrival-tag{font-size:8px;color:var(--neon-cyan);font-weight:bold}
+.modal-overlay{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;justify-content:center;align-items:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .2s ease}
+.modal-overlay.active{opacity:1;pointer-events:auto}
+.glass-modal{background:rgba(18,24,45,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.18);width:90%;max-width:360px;border-radius:22px;padding:20px;box-shadow:0 20px 40px rgba(0,0,0,.8),0 0 20px rgba(5,217,232,.15);transform:scale(.9);transition:transform .2s cubic-bezier(.175,.885,.32,1.275)}
+.modal-overlay.active .glass-modal{transform:scale(1)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid var(--glass-border);padding-bottom:10px}
+.modal-header h4{color:var(--neon-cyan);font-size:15px}
+.close-btn{background:none;border:none;color:var(--text-dim);font-size:22px;cursor:pointer;line-height:1}
+.shift-summary-card{background:linear-gradient(135deg,rgba(0,255,136,.15),rgba(5,217,232,.15));border:1px solid var(--neon-green);border-radius:12px;padding:10px 12px;margin-bottom:12px;display:flex;flex-direction:column;gap:4px}
+.shift-summary-title{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--neon-green);font-weight:bold}
+.shift-summary-times{font-size:14px;font-weight:bold;color:#fff}
+.arrival-info-box,.live-note{background:rgba(5,217,232,.12);border:1px solid var(--neon-cyan);border-radius:12px;padding:10px 12px;font-size:12px;color:var(--neon-cyan);display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.live-note{background:rgba(255,42,109,.12);border-color:var(--neon-red);color:var(--neon-red);font-size:11px}
+.modal-body{display:flex;flex-direction:column;gap:10px;font-size:13px}
+.form-group{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.03);padding:8px 12px;border-radius:10px;border:1px solid var(--glass-border)}
+.form-group label{color:var(--text-dim);font-size:12px}
+.form-input{background:rgba(10,15,30,.8);border:1px solid var(--glass-border);color:var(--neon-green);padding:5px 8px;border-radius:8px;font-size:13px;font-weight:bold;text-align:center}
+.overnight-badge{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(5,217,232,.1);border:1px solid var(--neon-cyan);border-radius:10px;color:var(--neon-cyan);font-size:12px;font-weight:bold}
+.night-pay-box{background:rgba(157,78,221,.12);border:1px solid var(--neon-purple);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.night-pay-row{display:flex;justify-content:space-between;align-items:center;font-size:12px}
+.modal-actions{display:flex;gap:10px;margin-top:6px}
+.btn-action{flex:1;padding:10px;border-radius:12px;border:none;font-weight:bold;font-size:12px;cursor:pointer;text-transform:uppercase;letter-spacing:.5px}
+.btn-save{background:var(--neon-green);color:#000;box-shadow:0 0 12px var(--neon-green-glow)}
+.btn-delete{background:rgba(255,42,109,.2);border:1px solid var(--neon-red);color:var(--neon-red)}
+.page-title{font-size:18px;color:var(--neon-cyan);text-align:center;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px}
+.year-grid{display:flex;flex-direction:column;gap:12px}
+.month-card{background:var(--card-bg);border:1px solid var(--glass-border);backdrop-filter:blur(12px);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.month-card-header{display:flex;justify-content:space-between;font-size:13px;font-weight:bold}
+.bar-group{display:flex;flex-direction:column;gap:6px}
+.bar-wrapper{display:flex;align-items:center;gap:10px;font-size:11px}
+.bar-label{width:60px;color:var(--text-dim)}
+.bar-track{flex:1;height:10px;background:rgba(255,255,255,.05);border-radius:10px;overflow:hidden}
+.bar-fill{height:100%;border-radius:10px;transition:width .4s ease}
+.bar-fill.work{background:linear-gradient(90deg,#00b359,var(--neon-green));box-shadow:0 0 10px var(--neon-green-glow)}
+.bar-fill.rest{background:linear-gradient(90deg,#b3003b,var(--neon-red));box-shadow:0 0 10px var(--neon-red-glow)}
+.bar-val{width:45px;text-align:right;font-size:11px;font-weight:bold}
+.sum-row{display:flex;gap:10px}
+.sum-box{flex:1;background:var(--card-bg);border:1px solid var(--glass-border);border-radius:16px;padding:12px;text-align:center}
+.sum-box b{display:block;font-size:20px;margin-top:4px}
+.sum-box span{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px}
+.al-card{background:var(--card-bg);border:1px solid var(--neon-orange);border-left-width:5px;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:5px;font-size:12px}
+.al-card.danger{border-color:var(--neon-red)}
+.al-card h5{font-size:13px;color:var(--neon-orange)}.al-card.danger h5{color:var(--neon-red)}
+.al-card p{color:var(--text-light);opacity:.9;line-height:1.35}
+.al-rec{align-self:flex-start;background:rgba(255,145,0,.15);border:1px solid var(--neon-orange);color:var(--neon-orange);border-radius:8px;padding:2px 8px;font-weight:bold}
+.ok-card{border-color:var(--neon-green)}.ok-card h5{color:var(--neon-green)}
+.rules{font-size:11px;color:var(--text-dim);line-height:1.55;background:var(--card-bg);border:1px solid var(--glass-border);border-radius:14px;padding:12px}
+.rules b{color:var(--neon-cyan)}
+.bottom-nav{position:fixed;bottom:15px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:400px;background:rgba(15,20,38,.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:30px;padding:6px;display:flex;justify-content:space-around;box-shadow:0 10px 25px rgba(0,0,0,.6);z-index:100}
+.nav-item{flex:1;padding:10px 2px;border:none;background:transparent;color:var(--text-dim);font-size:10px;font-weight:bold;border-radius:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:2px;transition:all .2s}
+.nav-item.active{color:var(--bg-dark);background:var(--neon-cyan);box-shadow:0 0 15px rgba(5,217,232,.6)}
+.month-card{cursor:pointer}.month-card:active{transform:scale(.98)}
+.year-nav{display:flex;align-items:center;justify-content:center;gap:14px;font-size:16px;font-weight:bold;color:var(--neon-cyan)}
+.btn-add{align-self:center;background:rgba(15,22,42,.75);border:1px solid var(--neon-green);color:var(--neon-green);padding:8px 16px;border-radius:20px;font-size:12px;font-weight:bold;cursor:pointer}
+.tag-edit{font-size:10px;color:var(--neon-purple);margin-left:6px}
+.pct-row{display:flex;gap:8px}.pct-row .sum-box b{font-size:18px}
+.stat-card{background:var(--card-bg);border:1px solid var(--glass-border);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px;font-size:12px;margin-bottom:12px}
+.stat-card h5{font-size:14px;color:var(--neon-cyan)}.stat-card .sub{color:var(--text-dim);font-size:11px}
+.stat-line{display:flex;justify-content:space-between;gap:8px}
+.verdict{border-radius:10px;padding:6px 10px;font-weight:bold;font-size:12px}
+.verdict.ok{background:rgba(0,255,136,.12);border:1px solid var(--neon-green);color:var(--neon-green)}
+.verdict.bad{background:rgba(255,145,0,.12);border:1px solid var(--neon-orange);color:var(--neon-orange)}
+.nav-badge{background:var(--neon-orange);color:#000;border-radius:10px;font-size:10px;padding:1px 6px;display:none}
+</style></head>
+<body>
+<div class="app-container">
+
+<div id="page-1" class="page active">
+  <div id="alert-banner" class="alert-banner" style="display:none">
+    <div class="ab-main" onclick="switchPage(3)"><span class="ab-ico">☢️</span><div><b id="ab-title"></b><small id="ab-sub"></small></div></div>
+    <button class="ab-x" onclick="dismissBanner(event)">&times;</button>
+  </div>
   <div class="hero-clock-section">
-
     <button id="clock-btn" class="big-3d-button" onclick="toggleClock()">
       <span class="btn-icon" id="btn-icon">⚡</span>
       <span class="btn-title" id="btn-title">Empezar Trabajo</span>
       <span class="timer-label" id="timer-label">Transcurrido</span>
-
-      <div class="timer-display" id="timer-display">
-        <span id="t-hours">00</span>
-        <span class="colon-blink">:</span>
-        <span id="t-mins">00</span>
-        <span class="colon-blink">:</span>
-        <span id="t-secs" class="second-tick">00</span>
-      </div>
+      <div class="timer-display" id="timer-display"><span id="t-hours">00</span><span class="colon-blink">:</span><span id="t-mins">00</span><span class="colon-blink">:</span><span id="t-secs" class="second-tick">00</span></div>
     </button>
-
-    <button class="btn-manual-edit" onclick="openManualStartModal()">
-      ✏️ Ajustar Inicio Manual
-    </button>
-
+    <div id="since-label" class="since-label">Desde --:--</div>
+    <button class="btn-manual-edit" onclick="openManualStartModal()">✏️ Ajustar Inicio Manual</button>
   </div>
-
   <div class="calendar-card">
     <div class="calendar-header">
       <h3 id="calendar-month-year">Septiembre 2026</h3>
-
       <div class="month-selector-controls">
         <button class="nav-btn" onclick="changeMonth(-1)">&#10094;</button>
-
-        <select id="month-select" class="month-select" onchange="onMonthSelectChange(this.value)">
-        </select>
-
+        <select id="month-select" class="month-select" onchange="onMonthSelectChange(this.value)"></select>
         <button class="nav-btn" onclick="changeMonth(1)">&#10095;</button>
       </div>
     </div>
-
-    <div class="weekdays-grid">
-      <div>Lun</div>
-      <div>Mar</div>
-      <div>Mié</div>
-      <div>Jue</div>
-      <div>Vie</div>
-      <div>Sáb</div>
-      <div>Dom</div>
-    </div>
-
+    <div class="weekdays-grid"><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div></div>
     <div id="calendar-days" class="days-grid"></div>
   </div>
 </div>
 
 <div id="page-2" class="page">
   <h2 class="page-title">Balance Anual</h2>
+  <div class="year-nav"><button class="nav-btn" onclick="changeYear(-1)">&#10094;</button><span id="annual-year">2026</span><button class="nav-btn" onclick="changeYear(1)">&#10095;</button></div>
   <div id="year-grid" class="year-grid"></div>
+  <button class="btn-add" onclick="openAddMonth()">+ Añadir mes a mano</button>
 </div>
 
-  </div>  <div id="manual-modal-overlay" class="modal-overlay" onclick="closeManualModal(event)">
-    <div class="glass-modal">  <div class="modal-header">
-    <h4>✏️ Edición Manual de Inicio</h4>
-    <button class="close-btn" onclick="forceCloseManualModal()">&times;</button>
-  </div>
+<div id="page-3" class="page">
+  <h2 class="page-title">☢️ Avisos y Recuperación</h2>
+  <div id="alerts-page"></div>
+</div>
 
-  <div class="modal-body">
+<div id="page-4" class="page">
+  <h2 class="page-title">📈 Medias 12 + 12</h2>
+  <div id="stats-page"></div>
+</div>
+</div>
 
-    <div class="form-group">
-      <label for="manual-state-select">Estado a Establecer:</label>
-
-      <select id="manual-state-select" class="form-input" style="width: 140px;">
-        <option value="work">⚡ Trabajando</option>
-        <option value="rest">☕ En Descanso</option>
-      </select>
+<div id="manual-modal-overlay" class="modal-overlay" onclick="closeManualModal(event)">
+  <div class="glass-modal">
+    <div class="modal-header"><h4>✏️ Edición Manual de Inicio</h4><button class="close-btn" onclick="forceCloseManualModal()">&times;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label for="manual-state-select">Estado a Establecer:</label>
+        <select id="manual-state-select" class="form-input" style="width:140px;"><option value="work">⚡ Trabajando</option><option value="rest">☕ En Descanso</option></select></div>
+      <div class="form-group"><label for="manual-datetime-input">Fecha y Hora de Inicio:</label>
+        <input type="datetime-local" id="manual-datetime-input" class="form-input" style="font-size:11px;"></div>
+      <div style="font-size:11px;color:var(--text-dim);text-align:center;margin-top:4px;">* Se actualiza también el día en curso del calendario y todos los cálculos.</div>
+      <div class="modal-actions" style="margin-top:10px;"><button class="btn-action btn-save" onclick="applyManualStart()">Aplicar Cambios</button></div>
     </div>
-
-    <div class="form-group">
-      <label for="manual-datetime-input">Fecha y Hora de Inicio:</label>
-
-      <input
-        type="datetime-local"
-        id="manual-datetime-input"
-        class="form-input"
-        style="font-size: 11px;"
-      >
-    </div>
-
-    <div style="font-size: 11px; color: var(--text-dim); text-align: center; margin-top: 4px;">
-      * El reloj calculará el tiempo transcurrido desde la hora seleccionada.
-    </div>
-
-    <div class="modal-actions" style="margin-top: 10px;">
-      <button class="btn-action btn-save" onclick="applyManualStart()">
-        Aplicar Cambios
-      </button>
-    </div>
-
   </div>
 </div>
 
-  </div>  <div id="modal-overlay" class="modal-overlay" onclick="closeModal(event)">
-    <div class="glass-modal">  <div class="modal-header">
-    <h4 id="modal-date">Detalle de Jornada</h4>
-    <button class="close-btn" onclick="forceCloseModal()">&times;</button>
-  </div>
-
-  <div id="shift-summary-card" class="shift-summary-card" style="display: none;">
-    <div class="shift-summary-title">⏱️ Jornada Registrada</div>
-    <div class="shift-summary-times" id="shift-summary-times">
-      16:09 ➔ 04:14 (+1d)
-    </div>
-    <div style="font-size: 11px; opacity: 0.9;" id="shift-summary-duration">
-      Duración Total: 12h 05m
-    </div>
-  </div>
-
-  <div id="arrival-info-box" class="arrival-info-box" style="display: none;">
-    <div>
-      ↳ <strong>Turno finalizado este día:</strong>
-      <span id="arrival-time-val">04:14</span> hs
-    </div>
-
-    <div style="font-size: 10px; opacity: 0.85;">
-      (Inicio el día anterior a las
-      <span id="arrival-start-val">16:09</span>)
-    </div>
-  </div>
-
-  <div class="modal-body">
-
-    <div class="form-group">
-      <label for="input-start">Hora de Inicio:</label>
-      <input type="time" id="input-start" class="form-input" onchange="updateShiftCalculation()">
-    </div>
-
-    <div class="form-group">
-      <label for="input-end">Hora de Fin:</label>
-      <input type="time" id="input-end" class="form-input" onchange="updateShiftCalculation()">
-    </div>
-
-    <div id="overnight-badge" class="overnight-badge">
-      <span id="badge-status">✓ Mismo día</span>
-      <span id="badge-hours">0h 00m</span>
-    </div>
-
-    <div class="night-pay-box">
-
-      <div class="night-pay-row">
-        <label>🌙 Horas Nocturnas (22h - 06h):</label>
-
-        <span id="calc-night-hours" style="font-weight: bold; color: var(--neon-purple);">
-          0h 00m
-        </span>
+<div id="month-modal-overlay" class="modal-overlay" onclick="closeMonthModal(event)">
+  <div class="glass-modal">
+    <div class="modal-header"><h4 id="mm-title">Mes</h4><button class="close-btn" onclick="forceCloseMonthModal()">&times;</button></div>
+    <div class="modal-body">
+      <div class="pct-row">
+        <div class="sum-box"><span>Trabajo</span><b id="mm-pw" style="color:var(--neon-green)">0%</b></div>
+        <div class="sum-box"><span>Descanso</span><b id="mm-pr" style="color:var(--neon-red)">0%</b></div>
+        <div class="sum-box"><span>Total</span><b id="mm-tot">0 h</b></div>
       </div>
-
-      <div class="night-pay-row">
-        <label for="input-night-rate">
-          Precio / Hora Nocturna (€):
-        </label>
-
-        <input
-          type="number"
-          id="input-night-rate"
-          class="form-input"
-          step="0.01"
-          min="0"
-          value="2.00"
-          style="width: 75px;"
-          onchange="updateShiftCalculation()"
-          onkeyup="updateShiftCalculation()"
-        >
+      <div class="form-group"><label for="mm-month">Mes:</label><select id="mm-month" class="form-input" onchange="onMonthPick(this.value)"></select></div>
+      <div class="form-group"><label for="mm-work">Horas de trabajo:</label><input type="number" id="mm-work" class="form-input" min="0" step="0.1" style="width:90px" oninput="updateMonthSummary()"></div>
+      <div class="form-group"><label for="mm-rest">Horas de descanso:</label><input type="number" id="mm-rest" class="form-input" min="0" step="0.1" style="width:90px" oninput="updateMonthSummary()"></div>
+      <div id="mm-note" style="font-size:11px;color:var(--text-dim);text-align:center"></div>
+      <div class="modal-actions">
+        <button id="mm-reset" class="btn-action btn-delete" onclick="resetMonth()" style="display:none">Quitar edición</button>
+        <button class="btn-action btn-save" onclick="saveMonth()">Guardar</button>
       </div>
-
-      <div
-        class="night-pay-row"
-        style="border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 6px; margin-top: 2px;"
-      >
-        <label style="font-weight: bold;">
-          💰 Total Plus Nocturnidad:
-        </label>
-
-        <span
-          id="calc-night-pay"
-          style="font-weight: bold; color: var(--neon-green); font-size: 14px;"
-        >
-          0.00 €
-        </span>
-      </div>
-
     </div>
-
-    <div class="modal-actions">
-
-      <button
-        id="btn-delete-shift"
-        class="btn-action btn-delete"
-        onclick="deleteShiftData()"
-        style="display: none;"
-      >
-        Eliminar
-      </button>
-
-      <button class="btn-action btn-save" onclick="saveShiftData()">
-        Guardar
-      </button>
-
-    </div>
-
   </div>
 </div>
 
-  </div>  <nav class="bottom-nav"><button
-  class="nav-item active"
-  id="nav-btn-1"
-  onclick="switchPage(1)"
->
-  📅 Principal
-</button>
+<div id="modal-overlay" class="modal-overlay" onclick="closeModal(event)">
+  <div class="glass-modal">
+    <div class="modal-header"><h4 id="modal-date">Detalle de Jornada</h4><button class="close-btn" onclick="forceCloseModal()">&times;</button></div>
+    <div id="live-note" class="live-note" style="display:none">🔴 Turno en curso. Cambiar la hora de inicio mueve el reloj grande. Si cambias la hora de fin, el turno se cierra.</div>
+    <div id="shift-summary-card" class="shift-summary-card" style="display:none">
+      <div class="shift-summary-title">⏱️ Jornada Registrada</div>
+      <div class="shift-summary-times" id="shift-summary-times"></div>
+      <div style="font-size:11px;opacity:.9;" id="shift-summary-duration"></div>
+    </div>
+    <div id="arrival-info-box" class="arrival-info-box" style="display:none">
+      <div>↳ <strong>Turno finalizado este día:</strong> <span id="arrival-time-val"></span> hs</div>
+      <div style="font-size:10px;opacity:.85;">(Inicio el día anterior a las <span id="arrival-start-val"></span>)</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label for="input-start">Hora de Inicio:</label><input type="time" id="input-start" class="form-input" onchange="updateShiftCalculation()"></div>
+      <div class="form-group"><label for="input-end">Hora de Fin:</label><input type="time" id="input-end" class="form-input" onchange="updateShiftCalculation()"></div>
+      <div id="overnight-badge" class="overnight-badge"><span id="badge-status">✓ Mismo día</span><span id="badge-hours">0h 00m</span></div>
+      <div class="night-pay-box">
+        <div class="night-pay-row"><label>🌙 Horas Nocturnas (22h - 06h):</label><span id="calc-night-hours" style="font-weight:bold;color:var(--neon-purple);">0h 00m</span></div>
+        <div class="night-pay-row"><label for="input-night-rate">Precio / Hora Nocturna (€):</label>
+          <input type="number" id="input-night-rate" class="form-input" step="0.01" min="0" value="2.00" style="width:75px;" onchange="updateShiftCalculation()" onkeyup="updateShiftCalculation()"></div>
+        <div class="night-pay-row" style="border-top:1px dashed rgba(255,255,255,.15);padding-top:6px;margin-top:2px;"><label style="font-weight:bold;">💰 Total Plus Nocturnidad:</label><span id="calc-night-pay" style="font-weight:bold;color:var(--neon-green);font-size:14px;">0.00 €</span></div>
+      </div>
+      <div class="modal-actions">
+        <button id="btn-delete-shift" class="btn-action btn-delete" onclick="deleteShiftData()" style="display:none;">Eliminar</button>
+        <button class="btn-action btn-save" onclick="saveShiftData()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-<button
-  class="nav-item"
-  id="nav-btn-2"
-  onclick="switchPage(2)"
->
-  📊 Registro Anual
-</button>
+<nav class="bottom-nav">
+  <button class="nav-item active" id="nav-btn-1" onclick="switchPage(1)">📅 Inicio</button>
+  <button class="nav-item" id="nav-btn-2" onclick="switchPage(2)">📊 Anual</button>
+  <button class="nav-item" id="nav-btn-3" onclick="switchPage(3)">☢️ Avisos <span id="nav-badge" class="nav-badge">0</span></button>
+  <button class="nav-item" id="nav-btn-4" onclick="switchPage(4)">📈 Medias</button>
+</nav>
 
-  </nav>  <script>
+<script>
+const STORAGE_KEY='control_horario_neon_data_v3';
+const MIN=60000,H=60,DAY=86400000;
+const state={isWorking:false,startTime:null,lastActionTimestamp:new Date(),liveClockAnimation:null,lastMinKey:null,
+  selectedMonth:new Date().getMonth(),selectedYear:new Date().getFullYear(),activeEditingKey:null,modalOrigEnd:null,
+  workedLogs:{},dismissedSig:'',monthOverrides:{},annualYear:new Date().getFullYear(),mm:null};
+const monthNames=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
-    const STORAGE_KEY = 'control_horario_neon_data_v3';
+/* ============ UTILIDADES ============ */
+const pad=n=>String(n).padStart(2,'0');
+const hm=d=>`${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const keyOf=d=>`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+const fm=m=>formatHoursMinutes(Math.max(0,Math.round(m)));
+const fd=ms=>{const d=new Date(ms);return `${pad(d.getDate())}/${pad(d.getMonth()+1)}`};
+function weekStart(ms){const d=new Date(ms);d.setHours(0,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return d.getTime()}
+function dateFromKey(key,timeStr){const [y,m,d]=key.split('-').map(Number);const [h,mi]=timeStr.split(':').map(Number);return new Date(y,m,d,h,mi)}
 
-    const state = {
-      isWorking: false,
-      startTime: null,
-      lastActionTimestamp: new Date(),
+/* ============ INICIO ============ */
+document.addEventListener('DOMContentLoaded',()=>{
+  loadStorageData();
+  initMonthSelector();
+  if(state.isWorking)setWorkingUI(true);
+  afterChange();
+  startLiveClock();
+});
 
-      liveClockInterval: null,
-      liveClockAnimation: null,
-      lastDisplayedSecond: null,
+/* ============ STORAGE ============ */
+function saveStorageData(){
+  localStorage.setItem(STORAGE_KEY,JSON.stringify({isWorking:state.isWorking,startTime:state.startTime?new Date(state.startTime).toISOString():null,lastActionTimestamp:state.lastActionTimestamp?new Date(state.lastActionTimestamp).toISOString():null,workedLogs:state.workedLogs,dismissedSig:state.dismissedSig,monthOverrides:state.monthOverrides}));
+}
+function loadStorageData(){
+  const raw=localStorage.getItem(STORAGE_KEY);
+  if(!raw)return;
+  try{
+    const p=JSON.parse(raw);
+    state.isWorking=p.isWorking||false;
+    state.startTime=p.startTime?new Date(p.startTime):null;
+    state.lastActionTimestamp=p.lastActionTimestamp?new Date(p.lastActionTimestamp):new Date();
+    state.workedLogs=p.workedLogs||{};
+    state.dismissedSig=p.dismissedSig||'';
+    state.monthOverrides=p.monthOverrides||{};
+  }catch(e){console.error("Error al cargar localStorage:",e)}
+}
 
-      selectedMonth: new Date().getMonth(),
-      selectedYear: new Date().getFullYear(),
+/* ============ NÚCLEO CONECTADO ============
+   Fuente única de verdad: state.isWorking/startTime/lastActionTimestamp + workedLogs.
+   El turno en curso vive también como log "active" en el día de inicio, así el botón,
+   el calendario, el modal y los avisos siempre muestran lo mismo. */
+function buildLog(s,e,prev,active){
+  const st=hm(s),en=hm(e),c=calculateShiftDuration(st,en),total=Math.max(0,Math.round((e-s)/MIN));
+  return {start:st,end:en,nightRate:prev&&prev.nightRate!==undefined?prev.nightRate:2.00,nightMinutes:c.nightMinutes,nightFormatted:c.nightFormatted,
+    isNextDay:s.toDateString()!==e.toDateString(),totalFormatted:formatHoursMinutes(total),totalMinutes:total,active:!!active};
+}
+function syncActiveLog(){
+  const liveKey=state.isWorking&&state.startTime?keyOf(new Date(state.startTime)):null;
+  Object.keys(state.workedLogs).forEach(k=>{if(state.workedLogs[k].active&&k!==liveKey)delete state.workedLogs[k]});
+  if(liveKey){
+    const s=new Date(state.startTime),now=new Date();
+    state.workedLogs[liveKey]=buildLog(s,now<s?s:now,state.workedLogs[liveKey],true);
+  }
+}
+function lastLogEntry(){
+  const iv=getIntervals().filter(x=>!x.active);
+  return iv.length?iv[iv.length-1]:null;
+}
+function afterChange(){
+  syncActiveLog();
+  saveStorageData();
+  updateLiveClock(true);
+  renderCalendar();
+  renderSince();
+  renderAlerts();
+  renderAnnualOverview();
+  renderStats();
+}
+function stopWorkingSession(end=new Date()){
+  if(!state.startTime)return;
+  const s=new Date(state.startTime);
+  if(end<s)end=s;
+  const k=keyOf(s);
+  state.workedLogs[k]=buildLog(s,end,state.workedLogs[k],false);
+  state.startTime=null;
+}
 
-      activeEditingKey: null,
-      workedLogs: {},
-
-      annualData: [
-        { name: 'Enero', workHours: 160, restHours: 120 },
-        { name: 'Febrero', workHours: 150, restHours: 130 },
-        { name: 'Marzo', workHours: 175, restHours: 105 },
-        { name: 'Abril', workHours: 140, restHours: 140 },
-        { name: 'Mayo', workHours: 180, restHours: 100 },
-        { name: 'Junio', workHours: 130, restHours: 150 },
-        { name: 'Julio', workHours: 110, restHours: 170 },
-        { name: 'Agosto', workHours: 168, restHours: 112 },
-        { name: 'Septiembre', workHours: 160, restHours: 120 },
-        { name: 'Octubre', workHours: 170, restHours: 110 },
-        { name: 'Noviembre', workHours: 155, restHours: 125 },
-        { name: 'Diciembre', workHours: 120, restHours: 160 }
-      ]
-    };
-
-    const monthNames = [
-      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-    ];
-
-
-    /* =========================================================
-       INICIO
-       ========================================================= */
-
-    document.addEventListener('DOMContentLoaded', () => {
-
-      loadStorageData();
-
-      initMonthSelector();
-      renderCalendar();
-      renderAnnualOverview();
-
-      /*
-        IMPORTANTE:
-        Calculamos y pintamos el tiempo INMEDIATAMENTE.
-        Ya no existe el intervalo de 1 segundo mostrando 00:00:00.
-      */
-      updateLiveClock(true);
-
-      startLiveClock();
-
-      if (state.isWorking) {
-        setWorkingUI(true);
-      }
-    });
-
-
-    /* =========================================================
-       STORAGE
-       ========================================================= */
-
-    function saveStorageData() {
-
-      const payload = {
-        isWorking: state.isWorking,
-
-        startTime:
-          state.startTime
-            ? state.startTime.toISOString()
-            : null,
-
-        lastActionTimestamp:
-          state.lastActionTimestamp
-            ? state.lastActionTimestamp.toISOString()
-            : null,
-
-        workedLogs: state.workedLogs
-      };
-
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(payload)
-      );
+/* ============ RELOJ ============ */
+function getTimerBaseTime(){return state.isWorking?(state.startTime||new Date()):(state.lastActionTimestamp||new Date())}
+function updateLiveClock(force=false){
+  const h=document.getElementById('t-hours'),m=document.getElementById('t-mins'),s=document.getElementById('t-secs');
+  if(!h||!m||!s)return;
+  const now=Date.now(),diff=Math.max(0,now-new Date(getTimerBaseTime()).getTime());
+  const hrs=String(Math.floor(diff/3600000)).padStart(2,'0'),mins=String(Math.floor((diff%3600000)/60000)).padStart(2,'0'),secs=String(Math.floor((diff%60000)/1000)).padStart(2,'0');
+  if(h.textContent!==hrs)h.textContent=hrs;
+  if(m.textContent!==mins)m.textContent=mins;
+  if(s.textContent!==secs||force){
+    s.textContent=secs;s.classList.remove('tick-anim');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>s.classList.add('tick-anim')));
+  }
+  const mk=Math.floor(now/MIN);
+  if(mk!==state.lastMinKey){
+    const first=state.lastMinKey===null;state.lastMinKey=mk;
+    if(!first){
+      if(state.isWorking){syncActiveLog();saveStorageData();renderCalendar()}
+      renderAlerts();
+      if(document.getElementById('page-4').classList.contains('active'))renderStats();
+      if(document.getElementById('page-2').classList.contains('active'))renderAnnualOverview();
     }
+  }
+}
+function startLiveClock(){
+  if(state.liveClockAnimation)cancelAnimationFrame(state.liveClockAnimation);
+  let last=0;
+  const loop=t=>{if(t-last>=100){updateLiveClock();last=t}state.liveClockAnimation=requestAnimationFrame(loop)};
+  state.liveClockAnimation=requestAnimationFrame(loop);
+}
+function renderSince(){
+  const el=document.getElementById('since-label');if(!el)return;
+  const b=new Date(getTimerBaseTime()),today=new Date(),y=new Date(Date.now()-DAY);
+  let pre='';
+  if(b.toDateString()!==today.toDateString())pre=b.toDateString()===y.toDateString()?'ayer ':`${pad(b.getDate())}/${pad(b.getMonth()+1)} `;
+  el.textContent=`Desde ${pre}${hm(b)}`;
+  el.classList.toggle('rest',!state.isWorking);
+}
 
+/* ============ BOTÓN PRINCIPAL ============ */
+function toggleClock(){
+  const now=new Date();
+  if(!state.isWorking){
+    state.isWorking=true;state.startTime=now;state.lastActionTimestamp=now;setWorkingUI(true);
+  }else{
+    stopWorkingSession(now);state.isWorking=false;state.lastActionTimestamp=now;setWorkingUI(false);
+  }
+  afterChange();
+}
+function setWorkingUI(w){
+  const btn=document.getElementById('clock-btn'),t=document.getElementById('btn-title'),i=document.getElementById('btn-icon'),l=document.getElementById('timer-label');
+  btn.classList.toggle('working',w);
+  t.innerText=w?'Terminar Trabajo':'Empezar Trabajo';
+  i.innerText=w?'🛑':'⚡';
+  l.innerText=w?'En Trabajo':'En Descanso';
+}
 
-    function loadStorageData() {
+/* ============ EDICIÓN MANUAL ============ */
+function openManualStartModal(){
+  document.getElementById('manual-state-select').value=state.isWorking?'work':'rest';
+  const d=new Date(getTimerBaseTime());
+  document.getElementById('manual-datetime-input').value=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  document.getElementById('manual-modal-overlay').classList.add('active');
+}
+function applyManualStart(){
+  const sel=document.getElementById('manual-state-select').value,v=document.getElementById('manual-datetime-input').value;
+  if(!v)return;
+  const d=new Date(v);
+  if(sel==='work'){
+    state.isWorking=true;state.startTime=d;state.lastActionTimestamp=d;setWorkingUI(true);
+  }else{
+    if(state.isWorking){stopWorkingSession(d)}
+    else{const l=lastLogEntry();if(l&&l.s<d.getTime())state.workedLogs[l.key]=buildLog(new Date(l.s),d,state.workedLogs[l.key],false)}
+    state.isWorking=false;state.startTime=null;state.lastActionTimestamp=d;setWorkingUI(false);
+  }
+  afterChange();forceCloseManualModal();
+}
+function closeManualModal(e){if(e.target.id==='manual-modal-overlay')forceCloseManualModal()}
+function forceCloseManualModal(){document.getElementById('manual-modal-overlay').classList.remove('active')}
 
-      const raw = localStorage.getItem(STORAGE_KEY);
+/* ============ FORMATOS Y CÁLCULOS ============ */
+function formatHoursMinutes(t){return `${Math.floor(t/60)}h ${String(t%60).padStart(2,'0')}m`}
+function calculateShiftDuration(a,b){
+  if(!a||!b)return {totalFormatted:"0h 00m",totalMinutes:0,isNextDay:false,nightFormatted:"0h 00m",nightMinutes:0};
+  const [sH,sM]=a.split(':').map(Number),[eH,eM]=b.split(':').map(Number);
+  const s=sH*60+sM;let e=eH*60+eM,next=false;
+  if(e<s){e+=1440;next=true}
+  let night=0;
+  [{start:0,end:360},{start:1320,end:1800},{start:2760,end:3240}].forEach(i=>{const o=Math.min(e,i.end)-Math.max(s,i.start);if(o>0)night+=o});
+  return {totalFormatted:formatHoursMinutes(e-s),totalMinutes:e-s,isNextDay:next,nightFormatted:formatHoursMinutes(night),nightMinutes:night};
+}
+function updateShiftCalculation(){
+  const st=document.getElementById('input-start').value,en=document.getElementById('input-end').value;
+  const rate=parseFloat(document.getElementById('input-night-rate').value)||0,c=calculateShiftDuration(st,en);
+  const s=document.getElementById('badge-status');
+  s.innerText=c.isNextDay?"➜ Fin al día siguiente (+1d)":"✓ Mismo día";
+  s.style.color=c.isNextDay?"var(--neon-cyan)":"var(--neon-green)";
+  document.getElementById('badge-hours').innerText=c.totalFormatted;
+  document.getElementById('calc-night-hours').innerText=c.nightFormatted;
+  document.getElementById('calc-night-pay').innerText=`${((c.nightMinutes/60)*rate).toFixed(2)} €`;
+}
 
-      if (raw) {
-
-        try {
-
-          const parsed = JSON.parse(raw);
-
-          state.isWorking =
-            parsed.isWorking || false;
-
-          state.startTime =
-            parsed.startTime
-              ? new Date(parsed.startTime)
-              : null;
-
-          state.lastActionTimestamp =
-            parsed.lastActionTimestamp
-              ? new Date(parsed.lastActionTimestamp)
-              : new Date();
-
-          state.workedLogs =
-            parsed.workedLogs || {};
-
-        } catch (e) {
-
-          console.error(
-            "Error al cargar localStorage:",
-            e
-          );
-        }
-      }
+/* ============ CALENDARIO ============ */
+function initMonthSelector(){
+  const sel=document.getElementById('month-select');sel.innerHTML='';
+  monthNames.forEach((m,i)=>{const o=document.createElement('option');o.value=i;o.innerText=m;if(i===state.selectedMonth)o.selected=true;sel.appendChild(o)});
+}
+function onMonthSelectChange(v){state.selectedMonth=parseInt(v);renderCalendar()}
+function changeMonth(d){
+  state.selectedMonth+=d;
+  if(state.selectedMonth<0){state.selectedMonth=11;state.selectedYear--}
+  else if(state.selectedMonth>11){state.selectedMonth=0;state.selectedYear++}
+  document.getElementById('month-select').value=state.selectedMonth;
+  renderCalendar();
+}
+function renderCalendar(){
+  const box=document.getElementById('calendar-days');box.innerHTML='';
+  document.getElementById('calendar-month-year').innerText=`${monthNames[state.selectedMonth]} ${state.selectedYear}`;
+  const first=new Date(state.selectedYear,state.selectedMonth,1).getDay(),startIdx=first===0?6:first-1;
+  const dim=new Date(state.selectedYear,state.selectedMonth+1,0).getDate();
+  const arrivals={};
+  for(let d=1;d<=dim;d++){
+    const l=state.workedLogs[`${state.selectedYear}-${state.selectedMonth}-${d}`];
+    if(l&&l.isNextDay)arrivals[`${state.selectedYear}-${state.selectedMonth}-${d+1}`]={endTime:l.end,startTime:l.start,prevDay:d};
+  }
+  for(let i=0;i<startIdx;i++){const c=document.createElement('div');c.className='day-cell empty';box.appendChild(c)}
+  const today=new Date();
+  for(let day=1;day<=dim;day++){
+    const cell=document.createElement('div');cell.className='day-cell';
+    const n=document.createElement('span');n.innerText=day;cell.appendChild(n);
+    const key=`${state.selectedYear}-${state.selectedMonth}-${day}`,log=state.workedLogs[key],arr=arrivals[key];
+    if(log){
+      cell.classList.add('worked');
+      if(log.active)cell.classList.add('live');
+      const dot=document.createElement('div');dot.className='green-dot';cell.appendChild(dot);
+      const b=document.createElement('span');b.className='jornada-badge';b.innerText=log.active?'En curso':'1 Jorn.';cell.appendChild(b);
     }
-
-
-    /* =========================================================
-       RELOJ EN TIEMPO REAL
-       ========================================================= */
-
-    function getTimerBaseTime() {
-
-      if (state.isWorking) {
-
-        return state.startTime || new Date();
-
-      }
-
-      return state.lastActionTimestamp || new Date();
+    if(arr){
+      cell.classList.add('overnight-end');
+      const t=document.createElement('span');t.className='arrival-tag';t.innerText=`↳ ${arr.endTime}`;cell.appendChild(t);
     }
+    if(day===today.getDate()&&state.selectedMonth===today.getMonth()&&state.selectedYear===today.getFullYear())cell.classList.add('today');
+    cell.onclick=()=>openModal(key,day,arr);
+    box.appendChild(cell);
+  }
+}
 
+/* ============ MODAL DE JORNADA ============ */
+function openModal(key,day,arr){
+  state.activeEditingKey=key;
+  const data=state.workedLogs[key];
+  document.getElementById('modal-date').innerText=`${day} de ${monthNames[state.selectedMonth]} ${state.selectedYear}`;
+  const del=document.getElementById('btn-delete-shift'),ab=document.getElementById('arrival-info-box'),sc=document.getElementById('shift-summary-card'),ln=document.getElementById('live-note');
+  state.modalOrigEnd=data?data.end:null;
+  if(data){
+    document.getElementById('input-start').value=data.start;
+    document.getElementById('input-end').value=data.end;
+    document.getElementById('input-night-rate').value=data.nightRate!==undefined?data.nightRate:2.00;
+    del.style.display='block';sc.style.display='flex';
+    document.getElementById('shift-summary-times').innerText=`${data.start} ➔ ${data.end} ${data.isNextDay?'(+1d)':''}`;
+    document.getElementById('shift-summary-duration').innerText=`Duración Total: ${data.totalFormatted}${data.active?' (en curso)':''}`;
+    ln.style.display=data.active?'block':'none';
+  }else{
+    const t=hm(new Date());
+    document.getElementById('input-start').value=t;document.getElementById('input-end').value=t;
+    document.getElementById('input-night-rate').value=2.00;
+    del.style.display='none';sc.style.display='none';ln.style.display='none';
+  }
+  if(arr){ab.style.display='flex';document.getElementById('arrival-time-val').innerText=arr.endTime;document.getElementById('arrival-start-val').innerText=arr.startTime}
+  else ab.style.display='none';
+  updateShiftCalculation();
+  document.getElementById('modal-overlay').classList.add('active');
+}
+function saveShiftData(){
+  const key=state.activeEditingKey;if(!key)return;
+  const start=document.getElementById('input-start').value,end=document.getElementById('input-end').value;
+  if(!start||!end)return;
+  const rate=parseFloat(document.getElementById('input-night-rate').value)||0;
+  const s=dateFromKey(key,start),e=dateFromKey(key,end);
+  if(e<s)e.setDate(e.getDate()+1);
+  const prev=state.workedLogs[key];
+  if(prev&&prev.active){
+    prev.nightRate=rate;
+    const now=new Date();
+    state.startTime=s>now?now:s;
+    if(end!==state.modalOrigEnd){
+      stopWorkingSession(e);state.isWorking=false;state.lastActionTimestamp=e;setWorkingUI(false);
+    }else state.lastActionTimestamp=state.startTime;
+  }else{
+    state.workedLogs[key]=buildLog(s,e,{nightRate:rate},false);
+    if(!state.isWorking){const l=lastLogEntry();if(l)state.lastActionTimestamp=new Date(l.e)}
+  }
+  afterChange();forceCloseModal();
+}
+function deleteShiftData(){
+  const key=state.activeEditingKey,l=state.workedLogs[key];
+  if(key&&l){
+    if(l.active){state.isWorking=false;state.startTime=null;state.lastActionTimestamp=new Date();setWorkingUI(false)}
+    delete state.workedLogs[key];
+    if(!state.isWorking&&!l.active){const x=lastLogEntry();if(x)state.lastActionTimestamp=new Date(x.e)}
+    afterChange();
+  }
+  forceCloseModal();
+}
+function closeModal(e){if(e.target.id==='modal-overlay')forceCloseModal()}
+function forceCloseModal(){document.getElementById('modal-overlay').classList.remove('active');state.activeEditingKey=null}
 
-    function updateLiveClock(forceAnimation = false) {
-
-      const hElem =
-        document.getElementById('t-hours');
-
-      const mElem =
-        document.getElementById('t-mins');
-
-      const sElem =
-        document.getElementById('t-secs');
-
-      if (!hElem || !mElem || !sElem) {
-        return;
-      }
-
-      const now = Date.now();
-
-      const baseTime =
-        new Date(getTimerBaseTime()).getTime();
-
-      const diff =
-        Math.max(0, now - baseTime);
-
-      const hrs =
-        String(Math.floor(diff / 3600000))
-          .padStart(2, '0');
-
-      const mins =
-        String(Math.floor(
-          (diff % 3600000) / 60000
-        )).padStart(2, '0');
-
-      const secs =
-        String(Math.floor(
-          (diff % 60000) / 1000
-        )).padStart(2, '0');
-
-
-      /*
-        Horas y minutos solamente cambian
-        cuando realmente cambian.
-      */
-
-      if (hElem.textContent !== hrs) {
-        hElem.textContent = hrs;
-      }
-
-      if (mElem.textContent !== mins) {
-        mElem.textContent = mins;
-      }
-
-
-      /*
-        Animamos únicamente cuando cambia el segundo.
-        Esto evita animaciones innecesarias.
-      */
-
-      if (
-        sElem.textContent !== secs ||
-        forceAnimation
-      ) {
-
-        sElem.textContent = secs;
-
-        sElem.classList.remove('tick-anim');
-
-        /*
-          En lugar de forzar un reflow con offsetWidth,
-          usamos requestAnimationFrame para que el navegador
-          pueda componer la animación de forma más suave.
-        */
-
-        requestAnimationFrame(() => {
-
-          requestAnimationFrame(() => {
-
-            sElem.classList.add('tick-anim');
-
-          });
-
-        });
-
-        state.lastDisplayedSecond = secs;
-      }
+/* ============ NORMATIVA: REGLAMENTO (CE) 561/2006 (mod. UE 2020/1054) ============
+   La app mide DISPONIBILIDAD total (inicio a fin del trabajo) y DESCANSO total (fin de
+   trabajo a siguiente inicio). No cuenta conducción ni pausas de 45 min.
+   Límites aplicados: máx. 15 h de disponibilidad por jornada (24 h - 9 h de descanso reducido),
+   descanso diario 11 h (reducido 9 h, máx. 3 entre semanales), semanal 45 h (reducido 24 h,
+   compensable antes del final de la 3ª semana siguiente), máx. 6 jornadas seguidas. */
+function getIntervals(){
+  const now=Date.now(),out=[];
+  Object.entries(state.workedLogs).forEach(([k,l])=>{
+    const s=dateFromKey(k,l.start).getTime();
+    const e=l.active?Math.max(now,s):s+(l.totalMinutes||0)*MIN;
+    out.push({s,e,key:k,active:!!l.active});
+  });
+  return out.sort((a,b)=>a.s-b.s);
+}
+function analyze(){
+  const now=Date.now(),iv=getIntervals(),alerts=[],info={};
+  if(!iv.length)return {alerts,workExcess:0,restNeed:0,info};
+  const recent=s=>s>now-35*DAY;
+  const add=(id,type,lvl,t,d,rec)=>alerts.push({id,type,lvl,t,d,rec:Math.round(rec||0)});
+  // Jornadas: bloques separados por un descanso >= 9 h
+  const J=[];
+  iv.forEach(b=>{
+    const j=J[J.length-1];
+    if(j&&b.s-j.e<9*H*MIN){j.maxGap=Math.max(j.maxGap,(b.s-j.e)/MIN);j.e=Math.max(j.e,b.e);j.work+=(b.e-b.s)/MIN;j.active=j.active||b.active}
+    else J.push({s:b.s,e:b.e,work:(b.e-b.s)/MIN,maxGap:0,active:b.active});
+  });
+  // Disponibilidad diaria: tiempo total desde que empiezas hasta que acabas
+  J.forEach(j=>{
+    const span=Math.floor((j.e-j.s)/MIN);
+    if(span>15*H){if(recent(j.s))add('sp-'+j.s,'work','danger','Más de 15 h de disponibilidad',`Jornada del ${fd(j.s)}: ${fm(span)} desde que empezaste (máx. 15 h). Exceso: ${fm(span-15*H)}.`,span-15*H)}
+    else if(j.active&&span>=13*H)add('n15-'+j.s,'work','warn','Cerca del límite de disponibilidad',`Llevas ${fm(span)}. Quedan ${fm(15*H-span)} para las 15 h.`,0);
+  });
+  // Descansos entre jornadas
+  let cnt=0,red=0;const debts=[];
+  const pay=x=>{for(const d of debts){if(x<=0)break;const t=Math.min(d.left,x);d.left-=t;x-=t}};
+  J.forEach((j,i)=>{
+    cnt++;
+    if(cnt===7&&recent(j.s))add('j6-'+j.s,'rest','danger','Más de 6 jornadas sin descanso semanal',`Llevas 7 jornadas desde el último descanso semanal (máx. 6). Toca descanso semanal de al menos 24 h (45 h normal).`,24*H);
+    const n=J[i+1];
+    if(!n){
+      if(cnt===6&&!j.active&&now-j.e<24*H*MIN)add('j6w-'+j.s,'rest','warn','Sexta jornada seguida','Tu próximo descanso debe ser semanal: mínimo 24 h (reducido) o 45 h (normal).',0);
+      if(!j.active)info.restNow=(now-j.e)/MIN;
+      info.cnt=cnt;return;
     }
+    const g=(n.s-j.e)/MIN;
+    if(g>=24*H){
+      if(g<45*H)debts.push({from:j.e,due:weekStart(j.e)+28*DAY,left:45*H-g});else pay(g-45*H);
+      cnt=0;red=0;
+    }else if(g>=11*H)pay(g-11*H);
+    else{red++;if(red>3&&recent(j.e))add('rd-'+j.e,'rest','danger','Más de 3 descansos diarios reducidos',`El descanso del ${fd(j.e)} fue de ${fm(g)} (reducido). Solo se permiten 3 entre dos descansos semanales.`,11*H-g)}
+  });
+  debts.forEach(d=>{if(d.left>0){
+    const over=now>d.due;
+    add('debt-'+d.from,'rest',over?'danger':'warn',`Descanso por recuperar: ${fm(d.left)}`,`Descanso semanal reducido del ${fd(d.from)}. Compénsalo de una sola vez junto a otro descanso de al menos 9 h ${over?'(plazo vencido el':'antes del'} ${fd(d.due)}${over?')':''}.`,d.left);
+  }});
+  alerts.sort((a,b)=>(a.lvl==='danger'?0:1)-(b.lvl==='danger'?0:1));
+  const workExcess=alerts.filter(a=>a.type==='work').reduce((s,a)=>s+a.rec,0);
+  const restNeed=alerts.filter(a=>a.type==='rest').reduce((s,a)=>s+a.rec,0);
+  return {alerts,workExcess,restNeed,info};
+}
 
+/* ============ AVISOS ============ */
+function renderAlerts(){
+  const A=analyze(),n=A.alerts.length,sig=A.alerts.map(a=>a.id).join('|');
+  const ban=document.getElementById('alert-banner'),badge=document.getElementById('nav-badge');
+  if(n&&sig!==state.dismissedSig){
+    ban.style.display='flex';
+    document.getElementById('ab-title').innerText=`${n} aviso${n>1?'s':''} de tiempos de conducción`;
+    document.getElementById('ab-sub').innerText=A.alerts[0].t;
+  }else ban.style.display='none';
+  badge.style.display=n?'inline':'none';badge.innerText=n;
+  state.currentSig=sig;
+  let h=`<div class="sum-row"><div class="sum-box"><span>Horas pasadas</span><b style="color:${A.workExcess?'var(--neon-red)':'var(--neon-green)'}">${fm(A.workExcess)}</b></div><div class="sum-box"><span>Descanso a recuperar</span><b style="color:${A.restNeed?'var(--neon-orange)':'var(--neon-green)'}">${fm(A.restNeed)}</b></div></div><div style="height:12px"></div>`;
+  if(A.info.restNow!==undefined&&!state.isWorking){
+    const target=A.info.cnt>=6?45*H:11*H;
+    h+=`<div class="al-card ok-card"><h5>☕ Descanso actual</h5><p>Llevas ${fm(A.info.restNow)} descansando. Mínimo diario: 11 h (reducido 9 h)${A.info.cnt>=6?'. Al ser la 6ª jornada, debe ser semanal (24 h reducido / 45 h normal)':''}.</p>${A.info.restNow<target?`<span class="al-rec">Faltan ${fm(target-A.info.restNow)} para el descanso normal</span>`:''}</div><div style="height:12px"></div>`;
+  }
+  if(!n)h+=`<div class="al-card ok-card"><h5>✅ Todo en regla</h5><p>No hay excesos de trabajo ni descansos pendientes de recuperar.</p></div>`;
+  h+=A.alerts.map(a=>`<div class="al-card ${a.lvl}" style="margin-bottom:10px"><h5>${a.lvl==='danger'?'☢️':'⚠️'} ${a.t}</h5><p>${a.d}</p>${a.rec?`<span class="al-rec">Recuperar: ${fm(a.rec)}</span>`:''}</div>`).join('');
+  h+=`<div class="rules"><b>Normativa aplicada</b> · Reglamento (CE) 561/2006, modificado por el Reglamento (UE) 2020/1054 (Paquete de Movilidad).<br>• Disponibilidad: máximo 15 h por jornada (jornada normal ~12 h; 13-15 h con descanso reducido).<br>• Descanso diario: 11 h (reducido 9 h, máx. 3 entre dos semanales).<br>• Descanso semanal: 45 h (reducido 24 h, compensable de una sola vez junto a otro descanso de al menos 9 h antes del final de la 3ª semana siguiente). Máx. 6 jornadas seguidas. El semanal normal no puede hacerse en cabina.<br><i>La app cuenta disponibilidad y descanso totales, no conducción ni pausas de 45 min. Es una ayuda: manda el tacógrafo.</i></div>`;
+  document.getElementById('alerts-page').innerHTML=h;
+}
+function dismissBanner(e){
+  e.stopPropagation();
+  state.dismissedSig=state.currentSig||'';
+  document.getElementById('alert-banner').style.display='none';
+  saveStorageData();
+}
 
-    function startLiveClock() {
-
-      if (state.liveClockInterval) {
-        clearInterval(state.liveClockInterval);
-      }
-
-      if (state.liveClockAnimation) {
-        cancelAnimationFrame(
-          state.liveClockAnimation
-        );
-      }
-
-
-      /*
-        Primera actualización inmediata.
-      */
-      updateLiveClock();
-
-
-      /*
-        requestAnimationFrame mantiene el reloj
-        sincronizado con los frames del dispositivo.
-      */
-
-      let lastFrameTime = 0;
-
-      function animationLoop(timestamp) {
-
-        /*
-          Limitamos el cálculo para no consumir recursos
-          innecesariamente, pero mantenemos una sensación
-          visual mucho más estable que setInterval(1000).
-        */
-
-        if (timestamp - lastFrameTime >= 100) {
-
-          updateLiveClock();
-
-          lastFrameTime = timestamp;
-        }
-
-        state.liveClockAnimation =
-          requestAnimationFrame(animationLoop);
-      }
-
-
-      state.liveClockAnimation =
-        requestAnimationFrame(animationLoop);
+/* ============ BALANCE ANUAL (solo datos reales o editados a mano) ============ */
+const f1=n=>(Math.round(n*10)/10).toString().replace('.',',');
+function autoMonthStats(y,m){
+  const iv=getIntervals();let w=0,r=0;
+  iv.forEach((b,i)=>{
+    const st=new Date(b.s),en=new Date(b.e);
+    if(st.getFullYear()===y&&st.getMonth()===m)w+=(b.e-b.s)/MIN;
+    if(en.getFullYear()===y&&en.getMonth()===m){
+      const nx=iv[i+1];
+      if(nx){if(nx.s>b.e)r+=(nx.s-b.e)/MIN}
+      else if(!b.active)r+=Math.max(0,(Date.now()-b.e)/MIN);
     }
-
-
-    /* =========================================================
-       BOTÓN PRINCIPAL
-       ========================================================= */
-
-    function toggleClock() {
-
-      state.isWorking =
-        !state.isWorking;
-
-      const now = new Date();
-
-
-      if (state.isWorking) {
-
-        state.startTime = now;
-        state.lastActionTimestamp = now;
-
-        setWorkingUI(true);
-
-      } else {
-
-        stopWorkingSession();
-
-        state.lastActionTimestamp = now;
-
-        setWorkingUI(false);
-      }
-
-
-      /*
-        Actualización visual instantánea.
-        El usuario no espera al siguiente frame.
-      */
-
-      updateLiveClock(true);
-
-      saveStorageData();
-    }
-
-
-    function setWorkingUI(isWorking) {
-
-      const btn =
-        document.getElementById('clock-btn');
-
-      const title =
-        document.getElementById('btn-title');
-
-      const icon =
-        document.getElementById('btn-icon');
-
-      const label =
-        document.getElementById('timer-label');
-
-
-      if (isWorking) {
-
-        btn.classList.add('working');
-
-        title.innerText =
-          'Terminar Trabajo';
-
-        icon.innerText =
-          '🛑';
-
-        label.innerText =
-          'En Trabajo';
-
-      } else {
-
-        btn.classList.remove('working');
-
-        title.innerText =
-          'Empezar Trabajo';
-
-        icon.innerText =
-          '⚡';
-
-        label.innerText =
-          'Transcurrido';
-      }
-    }
-
-
-    function stopWorkingSession() {
-
-      if (state.startTime) {
-
-        const startDate =
-          new Date(state.startTime);
-
-        const endDate =
-          new Date();
-
-
-        const todayKey =
-          `${startDate.getFullYear()}-${startDate.getMonth()}-${startDate.getDate()}`;
-
-
-        const startStr =
-          startDate.toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit'
-          });
-
-
-        const endStr =
-          endDate.toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit'
-          });
-
-
-        const calc =
-          calculateShiftDuration(
-            startStr,
-            endStr
-          );
-
-
-        state.workedLogs[todayKey] = {
-
-          start: startStr,
-          end: endStr,
-
-          nightRate: 2.00,
-
-          nightMinutes:
-            calc.nightMinutes,
-
-          nightFormatted:
-            calc.nightFormatted,
-
-          isNextDay:
-            calc.isNextDay,
-
-          totalFormatted:
-            calc.totalFormatted,
-
-          totalMinutes:
-            calc.totalMinutes
-        };
-
-
-        state.startTime = null;
-
-        renderCalendar();
-      }
-    }
-
-
-    /* =========================================================
-       EDICIÓN MANUAL
-       ========================================================= */
-
-    function openManualStartModal() {
-
-      const stateSelect =
-        document.getElementById(
-          'manual-state-select'
-        );
-
-      const dtInput =
-        document.getElementById(
-          'manual-datetime-input'
-        );
-
-
-      stateSelect.value =
-        state.isWorking
-          ? 'work'
-          : 'rest';
-
-
-      const baseDate =
-        state.isWorking
-          ? (state.startTime || new Date())
-          : (state.lastActionTimestamp || new Date());
-
-
-      const pad =
-        n => String(n).padStart(2, '0');
-
-
-      const formattedDT =
-        `${baseDate.getFullYear()}-${pad(baseDate.getMonth() + 1)}-${pad(baseDate.getDate())}T${pad(baseDate.getHours())}:${pad(baseDate.getMinutes())}`;
-
-
-      dtInput.value =
-        formattedDT;
-
-
-      document
-        .getElementById('manual-modal-overlay')
-        .classList.add('active');
-    }
-
-
-    function applyManualStart() {
-
-      const selectedState =
-        document.getElementById(
-          'manual-state-select'
-        ).value;
-
-
-      const dtValue =
-        document.getElementById(
-          'manual-datetime-input'
-        ).value;
-
-
-      if (!dtValue) {
-        return;
-      }
-
-
-      const manualDate =
-        new Date(dtValue);
-
-
-      if (selectedState === 'work') {
-
-        state.isWorking = true;
-
-        state.startTime =
-          manualDate;
-
-        state.lastActionTimestamp =
-          manualDate;
-
-        setWorkingUI(true);
-
-      } else {
-
-        if (state.isWorking) {
-          stopWorkingSession();
-        }
-
-        state.isWorking = false;
-
-        state.startTime = null;
-
-        state.lastActionTimestamp =
-          manualDate;
-
-        setWorkingUI(false);
-      }
-
-
-      /*
-        Actualización inmediata después
-        de modificar manualmente la hora.
-      */
-
-      updateLiveClock(true);
-
-      saveStorageData();
-
-      forceCloseManualModal();
-    }
-
-
-    function closeManualModal(event) {
-
-      if (
-        event.target.id ===
-        'manual-modal-overlay'
-      ) {
-        forceCloseManualModal();
-      }
-    }
-
-
-    function forceCloseManualModal() {
-
-      document
-        .getElementById('manual-modal-overlay')
-        .classList.remove('active');
-    }
-
-
-    /* =========================================================
-       FORMATOS Y CÁLCULOS
-       ========================================================= */
-
-    function formatHoursMinutes(totalMinutes) {
-
-      const hrs =
-        Math.floor(totalMinutes / 60);
-
-      const mins =
-        totalMinutes % 60;
-
-      return `${hrs}h ${String(mins).padStart(2, '0')}m`;
-    }
-
-
-    function calculateShiftDuration(
-      startTimeStr,
-      endTimeStr
-    ) {
-
-      if (
-        !startTimeStr ||
-        !endTimeStr
-      ) {
-
-        return {
-          totalFormatted: "0h 00m",
-          totalMinutes: 0,
-          isNextDay: false,
-          nightFormatted: "0h 00m",
-          nightMinutes: 0
-        };
-      }
-
-
-      const [sH, sM] =
-        startTimeStr
-          .split(':')
-          .map(Number);
-
-
-      const [eH, eM] =
-        endTimeStr
-          .split(':')
-          .map(Number);
-
-
-      const startMin =
-        sH * 60 + sM;
-
-      let endMin =
-        eH * 60 + eM;
-
-
-      let isNextDay = false;
-
-
-      if (endMin < startMin) {
-
-        endMin += 24 * 60;
-
-        isNextDay = true;
-      }
-
-
-      const diffMin =
-        endMin - startMin;
-
-
-      const nightIntervals = [
-        { start: 0, end: 360 },
-        { start: 1320, end: 1800 },
-        { start: 2760, end: 3240 }
-      ];
-
-
-      let nightMin = 0;
-
-
-      nightIntervals.forEach(interval => {
-
-        const overlapStart =
-          Math.max(
-            startMin,
-            interval.start
-          );
-
-        const overlapEnd =
-          Math.min(
-            endMin,
-            interval.end
-          );
-
-
-        if (overlapEnd > overlapStart) {
-
-          nightMin +=
-            overlapEnd - overlapStart;
-        }
-      });
-
-
-      return {
-
-        totalFormatted:
-          formatHoursMinutes(diffMin),
-
-        totalMinutes:
-          diffMin,
-
-        isNextDay,
-
-        nightFormatted:
-          formatHoursMinutes(nightMin),
-
-        nightMinutes:
-          nightMin
-      };
-    }
-
-
-    function updateShiftCalculation() {
-
-      const start =
-        document.getElementById(
-          'input-start'
-        ).value;
-
-
-      const end =
-        document.getElementById(
-          'input-end'
-        ).value;
-
-
-      const rateInput =
-        parseFloat(
-          document.getElementById(
-            'input-night-rate'
-          ).value
-        ) || 0;
-
-
-      const calc =
-        calculateShiftDuration(
-          start,
-          end
-        );
-
-
-      const statusElem =
-        document.getElementById(
-          'badge-status'
-        );
-
-      const hoursElem =
-        document.getElementById(
-          'badge-hours'
-        );
-
-      const calcNightHoursElem =
-        document.getElementById(
-          'calc-night-hours'
-        );
-
-      const calcNightPayElem =
-        document.getElementById(
-          'calc-night-pay'
-        );
-
-
-      if (calc.isNextDay) {
-
-        statusElem.innerText =
-          "➜ Fin al día siguiente (+1d)";
-
-        statusElem.style.color =
-          "var(--neon-cyan)";
-
-      } else {
-
-        statusElem.innerText =
-          "✓ Mismo día";
-
-        statusElem.style.color =
-          "var(--neon-green)";
-      }
-
-
-      hoursElem.innerText =
-        calc.totalFormatted;
-
-
-      calcNightHoursElem.innerText =
-        calc.nightFormatted;
-
-
-      const nightPayTotal =
-        (calc.nightMinutes / 60) *
-        rateInput;
-
-
-      calcNightPayElem.innerText =
-        `${nightPayTotal.toFixed(2)} €`;
-    }
-
-
-    /* =========================================================
-       CALENDARIO
-       ========================================================= */
-
-    function initMonthSelector() {
-
-      const select =
-        document.getElementById(
-          'month-select'
-        );
-
-
-      select.innerHTML = '';
-
-
-      monthNames.forEach(
-        (month, index) => {
-
-          const option =
-            document.createElement(
-              'option'
-            );
-
-          option.value =
-            index;
-
-          option.innerText =
-            month;
-
-          if (
-            index ===
-            state.selectedMonth
-          ) {
-            option.selected = true;
-          }
-
-          select.appendChild(option);
-        }
-      );
-    }
-
-
-    function onMonthSelectChange(val) {
-
-      state.selectedMonth =
-        parseInt(val);
-
-      renderCalendar();
-    }
-
-
-    function changeMonth(delta) {
-
-      state.selectedMonth +=
-        delta;
-
-
-      if (state.selectedMonth < 0) {
-
-        state.selectedMonth = 11;
-        state.selectedYear--;
-
-      } else if (
-        state.selectedMonth > 11
-      ) {
-
-        state.selectedMonth = 0;
-        state.selectedYear++;
-      }
-
-
-      document.getElementById(
-        'month-select'
-      ).value =
-        state.selectedMonth;
-
-
-      renderCalendar();
-    }
-
-
-    function renderCalendar() {
-
-      const daysContainer =
-        document.getElementById(
-          'calendar-days'
-        );
-
-
-      const headerTitle =
-        document.getElementById(
-          'calendar-month-year'
-        );
-
-
-      daysContainer.innerHTML = '';
-
-
-      headerTitle.innerText =
-        `${monthNames[state.selectedMonth]} ${state.selectedYear}`;
-
-
-      const firstDayOfMonth =
-        new Date(
-          state.selectedYear,
-          state.selectedMonth,
-          1
-        ).getDay();
-
-
-      const startingIndex =
-        firstDayOfMonth === 0
-          ? 6
-          : firstDayOfMonth - 1;
-
-
-      const daysInMonth =
-        new Date(
-          state.selectedYear,
-          state.selectedMonth + 1,
-          0
-        ).getDate();
-
-
-      const overnightArrivalDays = {};
-
-
-      for (
-        let day = 1;
-        day <= daysInMonth;
-        day++
-      ) {
-
-        const dateKey =
-          `${state.selectedYear}-${state.selectedMonth}-${day}`;
-
-
-        const log =
-          state.workedLogs[dateKey];
-
-
-        if (
-          log &&
-          log.isNextDay
-        ) {
-
-          const nextDateKey =
-            `${state.selectedYear}-${state.selectedMonth}-${day + 1}`;
-
-
-          overnightArrivalDays[nextDateKey] = {
-
-            endTime: log.end,
-
-            startTime: log.start,
-
-            prevDay: day
-          };
-        }
-      }
-
-
-      for (
-        let i = 0;
-        i < startingIndex;
-        i++
-      ) {
-
-        const emptyCell =
-          document.createElement('div');
-
-        emptyCell.className =
-          'day-cell empty';
-
-        daysContainer.appendChild(
-          emptyCell
-        );
-      }
-
-
-      const today =
-        new Date();
-
-
-      for (
-        let day = 1;
-        day <= daysInMonth;
-        day++
-      ) {
-
-        const cell =
-          document.createElement('div');
-
-        cell.className =
-          'day-cell';
-
-
-        const dayNumberSpan =
-          document.createElement('span');
-
-        dayNumberSpan.innerText =
-          day;
-
-        cell.appendChild(
-          dayNumberSpan
-        );
-
-
-        const dateKey =
-          `${state.selectedYear}-${state.selectedMonth}-${day}`;
-
-
-        const log =
-          state.workedLogs[dateKey];
-
-
-        const arrivalData =
-          overnightArrivalDays[dateKey];
-
-
-        if (log) {
-
-          cell.classList.add(
-            'worked'
-          );
-
-
-          const greenDot =
-            document.createElement('div');
-
-          greenDot.className =
-            'green-dot';
-
-          cell.appendChild(
-            greenDot
-          );
-
-
-          const badge =
-            document.createElement('span');
-
-          badge.className =
-            'jornada-badge';
-
-          badge.innerText =
-            `1 Jorn.`;
-
-          cell.appendChild(
-            badge
-          );
-        }
-
-
-        if (arrivalData) {
-
-          cell.classList.add(
-            'overnight-end'
-          );
-
-
-          const arrivalTag =
-            document.createElement('span');
-
-          arrivalTag.className =
-            'arrival-tag';
-
-          arrivalTag.innerText =
-            `↳ ${arrivalData.endTime}`;
-
-          cell.appendChild(
-            arrivalTag
-          );
-        }
-
-
-        if (
-          day === today.getDate() &&
-          state.selectedMonth === today.getMonth() &&
-          state.selectedYear === today.getFullYear()
-        ) {
-
-          cell.classList.add(
-            'today'
-          );
-        }
-
-
-        cell.onclick = () =>
-          openModal(
-            dateKey,
-            day,
-            arrivalData
-          );
-
-
-        daysContainer.appendChild(
-          cell
-        );
-      }
-    }
-
-
-    /* =========================================================
-       MODAL DE JORNADA
-       ========================================================= */
-
-    function openModal(
-      dateKey,
-      day,
-      arrivalData
-    ) {
-
-      state.activeEditingKey =
-        dateKey;
-
-
-      const data =
-        state.workedLogs[dateKey];
-
-
-      document.getElementById(
-        'modal-date'
-      ).innerText =
-        `${day} de ${monthNames[state.selectedMonth]} ${state.selectedYear}`;
-
-
-      const btnDelete =
-        document.getElementById(
-          'btn-delete-shift'
-        );
-
-
-      const arrivalBox =
-        document.getElementById(
-          'arrival-info-box'
-        );
-
-
-      const summaryCard =
-        document.getElementById(
-          'shift-summary-card'
-        );
-
-
-      if (data) {
-
-        document.getElementById(
-          'input-start'
-        ).value =
-          data.start;
-
-
-        document.getElementById(
-          'input-end'
-        ).value =
-          data.end;
-
-
-        document.getElementById(
-          'input-night-rate'
-        ).value =
-          data.nightRate !== undefined
-            ? data.nightRate
-            : 2.00;
-
-
-        btnDelete.style.display =
-          'block';
-
-
-        summaryCard.style.display =
-          'flex';
-
-
-        document.getElementById(
-          'shift-summary-times'
-        ).innerText =
-          `${data.start} ➔ ${data.end} ${data.isNextDay ? '(+1d)' : ''}`;
-
-
-        document.getElementById(
-          'shift-summary-duration'
-        ).innerText =
-          `Duración Total: ${data.totalFormatted}`;
-
-      } else {
-
-        const now =
-          new Date();
-
-
-        const currentTime =
-          `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-
-        document.getElementById(
-          'input-start'
-        ).value =
-          currentTime;
-
-
-        document.getElementById(
-          'input-end'
-        ).value =
-          currentTime;
-
-
-        document.getElementById(
-          'input-night-rate'
-        ).value =
-          2.00;
-
-
-        btnDelete.style.display =
-          'none';
-
-
-        summaryCard.style.display =
-          'none';
-      }
-
-
-      if (arrivalData) {
-
-        arrivalBox.style.display =
-          'flex';
-
-
-        document.getElementById(
-          'arrival-time-val'
-        ).innerText =
-          arrivalData.endTime;
-
-
-        document.getElementById(
-          'arrival-start-val'
-        ).innerText =
-          arrivalData.startTime;
-
-      } else {
-
-        arrivalBox.style.display =
-          'none';
-      }
-
-
-      updateShiftCalculation();
-
-
-      document
-        .getElementById('modal-overlay')
-        .classList.add('active');
-    }
-
-
-    function saveShiftData() {
-
-      const key =
-        state.activeEditingKey;
-
-
-      if (!key) {
-        return;
-      }
-
-
-      const start =
-        document.getElementById(
-          'input-start'
-        ).value;
-
-
-      const end =
-        document.getElementById(
-          'input-end'
-        ).value;
-
-
-      const nightRate =
-        parseFloat(
-          document.getElementById(
-            'input-night-rate'
-          ).value
-        ) || 0;
-
-
-      const calc =
-        calculateShiftDuration(
-          start,
-          end
-        );
-
-
-      state.workedLogs[key] = {
-
-        start,
-
-        end,
-
-        nightRate,
-
-        nightMinutes:
-          calc.nightMinutes,
-
-        nightFormatted:
-          calc.nightFormatted,
-
-        isNextDay:
-          calc.isNextDay,
-
-        totalFormatted:
-          calc.totalFormatted,
-
-        totalMinutes:
-          calc.totalMinutes
-      };
-
-
-      saveStorageData();
-
-      renderCalendar();
-
-      forceCloseModal();
-    }
-
-
-    function deleteShiftData() {
-
-      const key =
-        state.activeEditingKey;
-
-
-      if (
-        key &&
-        state.workedLogs[key]
-      ) {
-
-        delete state.workedLogs[key];
-
-        saveStorageData();
-
-        renderCalendar();
-      }
-
-
-      forceCloseModal();
-    }
-
-
-    function closeModal(event) {
-
-      if (
-        event.target.id ===
-        'modal-overlay'
-      ) {
-
-        forceCloseModal();
-      }
-    }
-
-
-    function forceCloseModal() {
-
-      document
-        .getElementById('modal-overlay')
-        .classList.remove('active');
-
-      state.activeEditingKey =
-        null;
-    }
-
-
-    /* =========================================================
-       BALANCE ANUAL
-       ========================================================= */
-
-    function renderAnnualOverview() {
-
-      const container =
-        document.getElementById(
-          'year-grid'
-        );
-
-
-      container.innerHTML = '';
-
-
-      state.annualData.forEach(
-        item => {
-
-          const total =
-            item.workHours +
-            item.restHours;
-
-
-          const workPercent =
-            Math.round(
-              (item.workHours / total) *
-              100
-            );
-
-
-          const restPercent =
-            Math.round(
-              (item.restHours / total) *
-              100
-            );
-
-
-          const card =
-            document.createElement(
-              'div'
-            );
-
-
-          card.className =
-            'month-card';
-
-
-          card.innerHTML = `
-
-            <div class="month-card-header">
-
-              <span>${item.name}</span>
-
-              <span style="color: ${
-                item.workHours >= item.restHours
-                  ? 'var(--neon-green)'
-                  : 'var(--neon-red)'
-              }">
-
-                ${
-                  item.workHours >= item.restHours
-                    ? 'Predomina Trabajo'
-                    : 'Predomina Descanso'
-                }
-
-              </span>
-
-            </div>
-
-            <div class="bar-group">
-
-              <div class="bar-wrapper">
-
-                <span class="bar-label">
-                  Trabajo
-                </span>
-
-                <div class="bar-track">
-
-                  <div
-                    class="bar-fill work"
-                    style="width: ${workPercent}%"
-                  ></div>
-
-                </div>
-
-                <span class="bar-val">
-                  ${item.workHours}h
-                </span>
-
-              </div>
-
-
-              <div class="bar-wrapper">
-
-                <span class="bar-label">
-                  Descanso
-                </span>
-
-                <div class="bar-track">
-
-                  <div
-                    class="bar-fill rest"
-                    style="width: ${restPercent}%"
-                  ></div>
-
-                </div>
-
-                <span class="bar-val">
-                  ${item.restHours}h
-                </span>
-
-              </div>
-
-            </div>
-          `;
-
-
-          container.appendChild(
-            card
-          );
-        }
-      );
-    }
-
-
-    /* =========================================================
-       NAVEGACIÓN
-       ========================================================= */
-
-    function switchPage(pageNumber) {
-
-      document
-        .querySelectorAll('.page')
-        .forEach(
-          p => p.classList.remove('active')
-        );
-
-
-      document
-        .querySelectorAll('.nav-item')
-        .forEach(
-          b => b.classList.remove('active')
-        );
-
-
-      document
-        .getElementById(
-          `page-${pageNumber}`
-        )
-        .classList.add('active');
-
-
-      document
-        .getElementById(
-          `nav-btn-${pageNumber}`
-        )
-        .classList.add('active');
-    }
-
-  </script></body>
+  });
+  return {work:w/H,rest:r/H,has:(w+r)>0};
+}
+function monthInfo(y,m){
+  const a=autoMonthStats(y,m),o=state.monthOverrides[`${y}-${m}`];
+  return o?{work:o.work,rest:o.rest,edited:true,has:true,auto:a}:{work:a.work,rest:a.rest,edited:false,has:a.has,auto:a};
+}
+function changeYear(d){state.annualYear+=d;renderAnnualOverview()}
+function renderAnnualOverview(){
+  const y=state.annualYear,c=document.getElementById('year-grid');
+  document.getElementById('annual-year').innerText=y;
+  let html='',n=0;
+  for(let m=0;m<12;m++){
+    const i=monthInfo(y,m);if(!i.has)continue;n++;
+    const tot=i.work+i.rest,wp=tot?Math.round(i.work/tot*100):0,rp=tot?100-wp:0;
+    html+=`<div class="month-card" onclick="openMonthModal(${y},${m})"><div class="month-card-header"><span>${monthNames[m]}${i.edited?'<span class="tag-edit">✏️ editado</span>':''}</span><span style="color:var(--text-dim)">Total ${f1(tot)} h</span></div><div class="bar-group"><div class="bar-wrapper"><span class="bar-label">Trabajo</span><div class="bar-track"><div class="bar-fill work" style="width:${wp}%"></div></div><span class="bar-val">${wp}%</span></div><div class="bar-wrapper"><span class="bar-label">Descanso</span><div class="bar-track"><div class="bar-fill rest" style="width:${rp}%"></div></div><span class="bar-val">${rp}%</span></div></div><div class="stat-line" style="font-size:11px;color:var(--text-dim)"><span>${f1(i.work)} h trabajo</span><span>${f1(i.rest)} h descanso</span></div></div>`;
+  }
+  c.innerHTML=n?html:`<div class="al-card ok-card"><h5>Sin registros en ${y}</h5><p>Aquí solo aparecen los meses con datos. Usa el reloj o pulsa "+ Añadir mes a mano".</p></div>`;
+}
+function fillMonthSelect(){
+  document.getElementById('mm-month').innerHTML=monthNames.map((n,i)=>`<option value="${i}">${n}</option>`).join('');
+}
+function fillMonthFields(){
+  const {y,m}=state.mm,i=monthInfo(y,m);
+  document.getElementById('mm-month').value=m;
+  document.getElementById('mm-work').value=i.has?Math.round(i.work*10)/10:'';
+  document.getElementById('mm-rest').value=i.has?Math.round(i.rest*10)/10:'';
+  document.getElementById('mm-title').innerText=`${monthNames[m]} ${y}`;
+  document.getElementById('mm-reset').style.display=i.edited?'block':'none';
+  document.getElementById('mm-note').innerText=i.edited?(i.auto.has?'Editado a mano. "Quitar edición" vuelve a los datos del calendario.':'Editado a mano. "Quitar edición" borra este mes.'):(i.has?'Datos calculados del calendario. Si los cambias, quedarán como editados.':'Mes sin registros. Rellena las horas para crearlo.');
+  updateMonthSummary();
+}
+function openMonthModal(y,m){
+  state.mm={y,m,add:false};fillMonthSelect();fillMonthFields();
+  document.getElementById('mm-month').disabled=true;
+  document.getElementById('month-modal-overlay').classList.add('active');
+}
+function openAddMonth(){
+  const now=new Date(),y=state.annualYear;
+  state.mm={y,m:y===now.getFullYear()?now.getMonth():0,add:true};fillMonthSelect();fillMonthFields();
+  document.getElementById('mm-month').disabled=false;
+  document.getElementById('month-modal-overlay').classList.add('active');
+}
+function onMonthPick(v){state.mm.m=parseInt(v);fillMonthFields()}
+function updateMonthSummary(){
+  const w=Math.max(0,parseFloat(document.getElementById('mm-work').value)||0),r=Math.max(0,parseFloat(document.getElementById('mm-rest').value)||0),t=w+r;
+  const wp=t?Math.round(w/t*100):0;
+  document.getElementById('mm-pw').innerText=`${wp}%`;
+  document.getElementById('mm-pr').innerText=`${t?100-wp:0}%`;
+  document.getElementById('mm-tot').innerText=`${f1(t)} h`;
+}
+function saveMonth(){
+  if(!state.mm)return;
+  const w=Math.max(0,parseFloat(document.getElementById('mm-work').value)||0),r=Math.max(0,parseFloat(document.getElementById('mm-rest').value)||0);
+  const k=`${state.mm.y}-${state.mm.m}`;
+  if(w===0&&r===0)delete state.monthOverrides[k];else state.monthOverrides[k]={work:w,rest:r};
+  saveStorageData();renderAnnualOverview();forceCloseMonthModal();
+}
+function resetMonth(){
+  if(!state.mm)return;
+  delete state.monthOverrides[`${state.mm.y}-${state.mm.m}`];
+  saveStorageData();renderAnnualOverview();forceCloseMonthModal();
+}
+function closeMonthModal(e){if(e.target.id==='month-modal-overlay')forceCloseMonthModal()}
+function forceCloseMonthModal(){document.getElementById('month-modal-overlay').classList.remove('active');state.mm=null}
+
+/* ============ MEDIAS 12 + 12 (semana, mes, año) ============
+   Ventana observada: desde el primer inicio registrado hasta ahora.
+   Trabajo = disponibilidad total; descanso = el resto del tiempo observado. */
+function periodBounds(kind,t){
+  const d=new Date(t);let a,b;
+  if(kind==='week'){a=new Date(weekStart(t));b=new Date(a);b.setDate(b.getDate()+7)}
+  else if(kind==='month'){a=new Date(d.getFullYear(),d.getMonth(),1);b=new Date(d.getFullYear(),d.getMonth()+1,1)}
+  else{a=new Date(d.getFullYear(),0,1);b=new Date(d.getFullYear()+1,0,1)}
+  return [a.getTime(),b.getTime()];
+}
+function overlapMin(iv,a,b){let t=0;iv.forEach(x=>{const o=Math.min(x.e,b)-Math.max(x.s,a);if(o>0)t+=o});return t/MIN}
+function periodStats(kind){
+  const iv=getIntervals();if(!iv.length)return null;
+  const T0=iv[0].s,T1=Math.max(Date.now(),iv[iv.length-1].e),list=[];
+  let t=T0,guard=0;
+  while(t<T1&&guard++<2000){
+    const [ps,pe]=periodBounds(kind,t),a=Math.max(ps,T0),b=Math.min(pe,T1);
+    if(b>a){const obs=(b-a)/MIN,work=Math.min(obs,overlapMin(iv,a,b));list.push({ps,pe,obs,work,rest:obs-work,len:(pe-ps)/MIN})}
+    t=pe;
+  }
+  return list;
+}
+function verdictHtml(dw){
+  return dw>12.25?`<div class="verdict bad">⚠️ Trabajas ${f1(dw-12)} h/día de más sobre las 12 h</div>`
+    :`<div class="verdict ok">✅ Cumples: ${f1(dw)} h/día de trabajo${dw<11.75?` (${f1(12-dw)} h menos que las 12 h)`:''}</div>`;
+}
+function barsHtml(w,r){
+  const t=w+r,wp=t?Math.round(w/t*100):0;
+  return `<div class="bar-group"><div class="bar-wrapper"><span class="bar-label">Trabajo</span><div class="bar-track"><div class="bar-fill work" style="width:${wp}%"></div></div><span class="bar-val">${wp}%</span></div><div class="bar-wrapper"><span class="bar-label">Descanso</span><div class="bar-track"><div class="bar-fill rest" style="width:${t?100-wp:0}%"></div></div><span class="bar-val">${t?100-wp:0}%</span></div></div>`;
+}
+function renderStats(){
+  const box=document.getElementById('stats-page');if(!box)return;
+  const weeks=periodStats('week');
+  if(!weeks){box.innerHTML=`<div class="al-card ok-card"><h5>Sin datos todavía</h5><p>Cuando registres tu primera jornada, aquí verás cuánto trabajas y descansas de media.</p></div>`;return}
+  const totW=weeks.reduce((s,x)=>s+x.work,0),totO=weeks.reduce((s,x)=>s+x.obs,0),dw=totW/totO*24,dr=24-dw;
+  let h=`<div class="stat-card"><h5>Media diaria total</h5><span class="sub">Objetivo: 12 h de trabajo + 12 h de descanso</span>${barsHtml(dw,dr)}<div class="stat-line"><span>Trabajo: <b>${f1(dw)} h/día</b></span><span>Descanso: <b>${f1(dr)} h/día</b></span></div>${verdictHtml(dw)}<span class="sub">Base: ${f1(totO/H/24)} días desde tu primer registro. Trabajo = disponibilidad total; descanso = el resto.</span></div>`;
+  [['week','Semana','esta semana'],['month','Mes','este mes'],['year','Año','este año']].forEach(([k,name,cur])=>{
+    const L=periodStats(k),full=L.filter(x=>x.obs>=24*H),base=full.length?full:L;
+    const mDw=base.reduce((s,x)=>s+x.work/x.obs*24,0)/base.length,mLen=base.reduce((s,x)=>s+x.len,0)/base.length/H/24;
+    const c=L[L.length-1],cdw=c.work/c.obs*24;
+    h+=`<div class="stat-card"><h5>Por ${name.toLowerCase()}</h5>
+      <div class="stat-line"><b>${cur[0].toUpperCase()+cur.slice(1)}</b><span class="sub">${f1(c.obs/H)} h observadas</span></div>
+      <div class="stat-line"><span>Trabajo: <b>${f1(c.work/H)} h</b></span><span>Descanso: <b>${f1(c.rest/H)} h</b></span></div>${barsHtml(c.work,c.rest)}${verdictHtml(cdw)}
+      <div class="stat-line" style="margin-top:4px"><b>Media por ${name.toLowerCase()}</b><span class="sub">${base.length} ${base.length>1?'periodos':'periodo'}</span></div>
+      <div class="stat-line"><span>Trabajo: <b>${f1(mDw*mLen)} h</b></span><span>Descanso: <b>${f1((24-mDw)*mLen)} h</b></span></div>${verdictHtml(mDw)}</div>`;
+  });
+  h+=`<div class="rules">Calculado con los turnos del calendario (no incluye los meses editados a mano en Anual). Las medias por mes y año se proyectan a partir de tu media diaria.</div>`;
+  box.innerHTML=h;
+}
+
+/* ============ NAVEGACIÓN ============ */
+function switchPage(n){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById(`page-${n}`).classList.add('active');
+  document.getElementById(`nav-btn-${n}`).classList.add('active');
+  if(n===2)renderAnnualOverview();
+  if(n===4)renderStats();
+  window.scrollTo(0,0);
+}
+</script>
+</body>
 </html>
