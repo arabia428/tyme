@@ -33,6 +33,9 @@ body{background-color:var(--bg-dark);background-image:radial-gradient(circle at 
 .since-label.rest{color:var(--neon-green);text-shadow:0 0 8px var(--neon-green-glow)}
 .btn-manual-edit{background:rgba(15,22,42,.75);border:1px solid var(--neon-cyan);color:var(--neon-cyan);padding:6px 14px;border-radius:20px;font-size:11px;font-weight:bold;letter-spacing:.5px;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 0 10px rgba(5,217,232,.15);transition:all .2s ease}
 .btn-manual-edit:active{transform:scale(.95);background:var(--neon-cyan);color:var(--bg-dark)}
+.btn-manual-edit.danger{border-color:var(--neon-red);color:var(--neon-red);box-shadow:0 0 10px rgba(255,42,109,.15)}
+.btn-manual-edit.danger:active{background:var(--neon-red);color:#fff}
+.hero-btn-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .alert-banner{position:sticky;top:8px;z-index:60;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#ff9100,#ff5e00);color:#1a0d00;border-radius:16px;padding:10px 12px;box-shadow:0 0 20px rgba(255,140,0,.55);animation:warnPulse 2s ease-in-out infinite alternate}
 @keyframes warnPulse{from{box-shadow:0 0 10px rgba(255,140,0,.4)}to{box-shadow:0 0 26px rgba(255,140,0,.85)}}
 .ab-main{flex:1;display:flex;gap:10px;align-items:center;cursor:pointer;min-width:0}
@@ -81,6 +84,7 @@ body{background-color:var(--bg-dark);background-image:radial-gradient(circle at 
 .btn-action{flex:1;padding:10px;border-radius:12px;border:none;font-weight:bold;font-size:12px;cursor:pointer;text-transform:uppercase;letter-spacing:.5px}
 .btn-save{background:var(--neon-green);color:#000;box-shadow:0 0 12px var(--neon-green-glow)}
 .btn-delete{background:rgba(255,42,109,.2);border:1px solid var(--neon-red);color:var(--neon-red)}
+.btn-delete.armed{background:var(--neon-red);color:#fff;box-shadow:0 0 14px var(--neon-red-glow)}
 .page-title{font-size:18px;color:var(--neon-cyan);text-align:center;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px}
 .year-grid{display:flex;flex-direction:column;gap:12px}
 .month-card{background:var(--card-bg);border:1px solid var(--glass-border);backdrop-filter:blur(12px);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px}
@@ -120,8 +124,37 @@ body{background-color:var(--bg-dark);background-image:radial-gradient(circle at 
 .verdict.ok{background:rgba(0,255,136,.12);border:1px solid var(--neon-green);color:var(--neon-green)}
 .verdict.bad{background:rgba(255,145,0,.12);border:1px solid var(--neon-orange);color:var(--neon-orange)}
 .nav-badge{background:var(--neon-orange);color:#000;border-radius:10px;font-size:10px;padding:1px 6px;display:none}
+.del-preview{background:rgba(255,42,109,.1);border:1px solid var(--neon-red);border-radius:12px;padding:10px 12px;font-size:12px;color:var(--neon-red);text-align:center;line-height:1.4}
+#bg-layer{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;background-size:cover;background-position:center;background-repeat:no-repeat;display:none;pointer-events:none}
+.bg-range{width:140px;accent-color:var(--neon-cyan)}
+.app-container{padding-top:62px}
+.menu-btn{position:fixed;top:14px;left:14px;z-index:90;width:42px;height:42px;border-radius:14px;background:rgba(20,25,45,.45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--glass-border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35);transition:transform .15s ease}
+.menu-btn:active{transform:scale(.92)}
+.menu-btn span{display:block;width:20px;height:2px;border-radius:2px;background:var(--text-light);opacity:.9}
+.settings-scrim{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4);z-index:1100;opacity:0;pointer-events:none;transition:opacity .25s ease}
+.settings-scrim.open{opacity:1;pointer-events:auto}
+.settings-drawer{position:fixed;top:0;left:0;height:100%;width:min(310px,84vw);z-index:1110;background:rgba(15,20,38,.55);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-right:1px solid rgba(255,255,255,.16);box-shadow:8px 0 30px rgba(0,0,0,.5);padding:18px 16px;display:flex;flex-direction:column;gap:14px;transform:translateX(-105%);transition:transform .3s cubic-bezier(.22,1,.36,1);overflow-y:auto}
+.settings-drawer.open{transform:translateX(0)}
+.settings-section{background:rgba(255,255,255,.05);border:1px solid var(--glass-border);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.settings-section h5{font-size:13px;color:var(--neon-cyan)}
 </style></head>
 <body>
+<div id="bg-layer"></div>
+<button id="menu-btn" class="menu-btn" onclick="openSettings()" aria-label="Ajustes"><span></span><span></span><span></span></button>
+<div id="settings-scrim" class="settings-scrim" onclick="closeSettings()"></div>
+<aside id="settings-drawer" class="settings-drawer">
+  <div class="modal-header" style="margin-bottom:0"><h4>⚙️ Ajustes</h4><button class="close-btn" onclick="closeSettings()">&times;</button></div>
+  <div class="settings-section">
+    <h5>🖼️ Fondo de la app</h5>
+    <div id="bg-status" class="arrival-info-box" style="margin-bottom:0;text-align:center"></div>
+    <label for="bg-file" class="btn-action btn-save" style="text-align:center;display:block">📷 Elegir foto</label>
+    <input type="file" id="bg-file" accept="image/*" style="display:none" onchange="onBgFile(event)">
+    <div class="form-group"><label for="bg-dim">Oscurecer: <b id="bg-dim-val">35%</b></label>
+      <input type="range" id="bg-dim" class="bg-range" min="0" max="90" step="5" value="35" oninput="onBgDimInput(this.value)" onchange="saveBackground()"></div>
+    <button class="btn-action btn-delete" onclick="clearBackground()">Quitar foto</button>
+  </div>
+  <div style="font-size:11px;color:var(--text-dim);text-align:center">Más ajustes próximamente…</div>
+</aside>
 <div class="app-container">
 
 <div id="page-1" class="page active">
@@ -137,7 +170,10 @@ body{background-color:var(--bg-dark);background-image:radial-gradient(circle at 
       <div class="timer-display" id="timer-display"><span id="t-hours">00</span><span class="colon-blink">:</span><span id="t-mins">00</span><span class="colon-blink">:</span><span id="t-secs" class="second-tick">00</span></div>
     </button>
     <div id="since-label" class="since-label">Desde --:--</div>
-    <button class="btn-manual-edit" onclick="openManualStartModal()">✏️ Ajustar Inicio Manual</button>
+    <div class="hero-btn-row">
+      <button class="btn-manual-edit" onclick="openManualStartModal()">✏️ Ajustar Inicio Manual</button>
+      <button class="btn-manual-edit danger" onclick="openDeleteModal()">🗑️ Borrar datos</button>
+    </div>
   </div>
   <div class="calendar-card">
     <div class="calendar-header">
@@ -181,6 +217,29 @@ body{background-color:var(--bg-dark);background-image:radial-gradient(circle at 
         <input type="datetime-local" id="manual-datetime-input" class="form-input" style="font-size:11px;"></div>
       <div style="font-size:11px;color:var(--text-dim);text-align:center;margin-top:4px;">* Se actualiza también el día en curso del calendario y todos los cálculos.</div>
       <div class="modal-actions" style="margin-top:10px;"><button class="btn-action btn-save" onclick="applyManualStart()">Aplicar Cambios</button></div>
+    </div>
+  </div>
+</div>
+
+<div id="delete-modal-overlay" class="modal-overlay" onclick="closeDeleteModal(event)">
+  <div class="glass-modal">
+    <div class="modal-header"><h4 style="color:var(--neon-red)">🗑️ Borrar datos</h4><button class="close-btn" onclick="forceCloseDeleteModal()">&times;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label for="del-scope">¿Qué borrar?</label>
+        <select id="del-scope" class="form-input" style="width:150px;" onchange="onDelScopeChange()">
+          <option value="week">📅 Una semana</option>
+          <option value="month">🗓️ Un mes</option>
+          <option value="all">☢️ Todo</option>
+        </select></div>
+      <div id="del-week-row" class="form-group"><label for="del-date">Semana del día:</label>
+        <input type="date" id="del-date" class="form-input" style="font-size:12px;" onchange="updateDeletePreview()"></div>
+      <div id="del-month-row" class="form-group" style="display:none"><label for="del-month">Mes:</label>
+        <input type="month" id="del-month" class="form-input" style="font-size:12px;" onchange="updateDeletePreview()"></div>
+      <div id="del-preview" class="del-preview"></div>
+      <div class="modal-actions">
+        <button class="btn-action btn-save" style="background:rgba(255,255,255,.08);color:var(--text-light);box-shadow:none" onclick="forceCloseDeleteModal()">Cancelar</button>
+        <button id="del-confirm-btn" class="btn-action btn-delete" onclick="confirmDelete()">Borrar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -249,7 +308,7 @@ const STORAGE_KEY='control_horario_neon_data_v3';
 const MIN=60000,H=60,DAY=86400000;
 const state={isWorking:false,startTime:null,lastActionTimestamp:new Date(),liveClockAnimation:null,lastMinKey:null,
   selectedMonth:new Date().getMonth(),selectedYear:new Date().getFullYear(),activeEditingKey:null,modalOrigEnd:null,
-  workedLogs:{},dismissedSig:'',monthOverrides:{},annualYear:new Date().getFullYear(),mm:null};
+  workedLogs:{},dismissedSig:'',monthOverrides:{},annualYear:new Date().getFullYear(),mm:null,delArmed:false};
 const monthNames=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
 /* ============ UTILIDADES ============ */
@@ -264,6 +323,7 @@ function dateFromKey(key,timeStr){const [y,m,d]=key.split('-').map(Number);const
 /* ============ INICIO ============ */
 document.addEventListener('DOMContentLoaded',()=>{
   loadStorageData();
+  loadBackground();
   initMonthSelector();
   if(state.isWorking)setWorkingUI(true);
   afterChange();
@@ -407,6 +467,129 @@ function applyManualStart(){
 }
 function closeManualModal(e){if(e.target.id==='manual-modal-overlay')forceCloseManualModal()}
 function forceCloseManualModal(){document.getElementById('manual-modal-overlay').classList.remove('active')}
+
+/* ============ BORRAR DATOS (semana / mes / todo) ============ */
+function openDeleteModal(){
+  const now=new Date();
+  document.getElementById('del-scope').value='week';
+  document.getElementById('del-date').value=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  document.getElementById('del-month').value=`${now.getFullYear()}-${pad(now.getMonth()+1)}`;
+  onDelScopeChange();
+  document.getElementById('delete-modal-overlay').classList.add('active');
+}
+function onDelScopeChange(){
+  const sc=document.getElementById('del-scope').value;
+  document.getElementById('del-week-row').style.display=sc==='week'?'flex':'none';
+  document.getElementById('del-month-row').style.display=sc==='month'?'flex':'none';
+  updateDeletePreview();
+}
+/* Devuelve {a,b,label} con el rango [a,b) en ms, o null si falta la fecha */
+function delRange(){
+  const sc=document.getElementById('del-scope').value;
+  if(sc==='all')return {sc,a:-Infinity,b:Infinity,label:'TODOS los datos de la app'};
+  if(sc==='week'){
+    const v=document.getElementById('del-date').value;if(!v)return null;
+    const [y,m,d]=v.split('-').map(Number);
+    const a=weekStart(new Date(y,m-1,d).getTime()),e=new Date(a);e.setDate(e.getDate()+7);
+    return {sc,a,b:e.getTime(),label:`la semana del ${fd(a)} al ${fd(e.getTime()-DAY)}`};
+  }
+  const v=document.getElementById('del-month').value;if(!v)return null;
+  const [y,m]=v.split('-').map(Number);
+  return {sc,a:new Date(y,m-1,1).getTime(),b:new Date(y,m,1).getTime(),y,m:m-1,label:`${monthNames[m-1]} ${y}`};
+}
+function delMatches(r){
+  return Object.entries(state.workedLogs).filter(([k,l])=>{
+    const s=dateFromKey(k,l.start).getTime();return s>=r.a&&s<r.b;
+  });
+}
+function updateDeletePreview(){
+  state.delArmed=false;
+  const btn=document.getElementById('del-confirm-btn');btn.classList.remove('armed');btn.innerText='Borrar';
+  const box=document.getElementById('del-preview'),r=delRange();
+  if(!r){box.innerText='Elige una fecha.';return}
+  const list=delMatches(r),mins=list.reduce((s,[,l])=>s+(l.totalMinutes||0),0);
+  const ov=r.sc==='all'?Object.keys(state.monthOverrides).length:(r.sc==='month'&&state.monthOverrides[`${r.y}-${r.m}`]?1:0);
+  let t=`Se borrará ${r.label}:<br><b>${list.length} jornada${list.length===1?'':'s'}</b> (${fm(mins)})`;
+  if(ov)t+=` + ${ov} mes${ov>1?'es':''} editado${ov>1?'s':''} a mano`;
+  if(list.some(([,l])=>l.active))t+=`<br>⚠️ Incluye el turno en curso: se parará el reloj.`;
+  box.innerHTML=t;
+}
+function confirmDelete(){
+  const r=delRange();if(!r)return;
+  const btn=document.getElementById('del-confirm-btn');
+  if(!state.delArmed){state.delArmed=true;btn.classList.add('armed');btn.innerText='¿Seguro? Pulsa otra vez';return}
+  if(r.sc==='all'){
+    state.workedLogs={};state.monthOverrides={};state.dismissedSig='';
+    state.isWorking=false;state.startTime=null;state.lastActionTimestamp=new Date();setWorkingUI(false);
+  }else{
+    delMatches(r).forEach(([k,l])=>{
+      if(l.active){state.isWorking=false;state.startTime=null;setWorkingUI(false)}
+      delete state.workedLogs[k];
+    });
+    if(r.sc==='month')delete state.monthOverrides[`${r.y}-${r.m}`];
+    if(!state.isWorking){const x=lastLogEntry();state.lastActionTimestamp=x?new Date(x.e):new Date()}
+  }
+  afterChange();forceCloseDeleteModal();
+}
+function closeDeleteModal(e){if(e.target.id==='delete-modal-overlay')forceCloseDeleteModal()}
+function forceCloseDeleteModal(){state.delArmed=false;document.getElementById('delete-modal-overlay').classList.remove('active')}
+
+/* ============ FONDO / WALLPAPER ============
+   Se guarda aparte de los datos de horas (así "Borrar todo" no quita tu fondo). */
+const BG_KEY='control_horario_bg_v1';
+const bg={img:null,dim:0.35};
+function loadBackground(){
+  try{const r=localStorage.getItem(BG_KEY);if(r){const p=JSON.parse(r);bg.img=p.img||null;bg.dim=typeof p.dim==='number'?p.dim:0.35}}catch(e){console.error(e)}
+  applyBackground();
+}
+function saveBackground(){
+  try{localStorage.setItem(BG_KEY,JSON.stringify(bg));return true}
+  catch(e){alert('No cabe la imagen en la memoria. Prueba con otra más ligera.');return false}
+}
+function applyBackground(){
+  const el=document.getElementById('bg-layer');if(!el)return;
+  if(!bg.img){el.style.display='none';el.style.backgroundImage='';return}
+  const c=`rgba(10,12,22,${bg.dim})`;
+  el.style.backgroundImage=`linear-gradient(${c},${c}),url(${bg.img})`;
+  el.style.display='block';
+}
+function updateBgStatus(){
+  document.getElementById('bg-status').innerText=bg.img?'✅ Usando tu foto de fondo':'🌌 Usando el fondo neon original';
+  document.getElementById('bg-dim').value=Math.round(bg.dim*100);
+  document.getElementById('bg-dim-val').innerText=Math.round(bg.dim*100)+'%';
+}
+function openSettings(){
+  updateBgStatus();
+  document.getElementById('settings-drawer').classList.add('open');
+  document.getElementById('settings-scrim').classList.add('open');
+}
+function closeSettings(){
+  document.getElementById('settings-drawer').classList.remove('open');
+  document.getElementById('settings-scrim').classList.remove('open');
+}
+function onBgDimInput(v){
+  bg.dim=v/100;
+  document.getElementById('bg-dim-val').innerText=v+'%';
+  applyBackground();
+}
+function onBgFile(e){
+  const f=e.target.files&&e.target.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    const im=new Image();
+    im.onload=()=>{
+      const sc=Math.min(1,1280/Math.max(im.width,im.height)),cv=document.createElement('canvas');
+      cv.width=Math.round(im.width*sc);cv.height=Math.round(im.height*sc);
+      cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
+      const old=bg.img;bg.img=cv.toDataURL('image/jpeg',.8);
+      if(!saveBackground())bg.img=old;
+      applyBackground();updateBgStatus();
+    };
+    im.src=rd.result;
+  };
+  rd.readAsDataURL(f);e.target.value='';
+}
+function clearBackground(){bg.img=null;saveBackground();applyBackground();updateBgStatus()}
 
 /* ============ FORMATOS Y CÁLCULOS ============ */
 function formatHoursMinutes(t){return `${Math.floor(t/60)}h ${String(t%60).padStart(2,'0')}m`}
