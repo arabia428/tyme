@@ -141,15 +141,23 @@ body{background-color:var(--bg-dark);background-image:radial-gradient(circle at 
 .settings-section{background:rgba(255,255,255,.05);border:1px solid var(--glass-border);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:10px}
 .settings-section h5{font-size:13px;color:var(--neon-cyan)}
 
-.crop-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1200;background:rgba(5,8,18,.96);display:none;flex-direction:column;padding:calc(12px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px));gap:10px}
-.crop-overlay.open{display:flex}
-.crop-head{display:flex;flex-direction:column;gap:2px;text-align:center;color:var(--neon-cyan);font-size:15px;padding-top:4px}
-.crop-head small{color:var(--text-dim);font-size:11px}
 .crop-stage{flex:1;position:relative;overflow:hidden;border-radius:16px;touch-action:none;min-height:0;background:#000}
 .crop-img{position:absolute;top:0;left:0;max-width:none;pointer-events:none}
 .crop-frame{position:absolute;border:2px solid var(--neon-cyan);border-radius:10px;box-shadow:0 0 0 9999px rgba(5,8,18,.72),0 0 18px var(--neon-cyan-glow);pointer-events:none}
 .crop-tag{position:absolute;top:6px;left:50%;transform:translateX(-50%);font-size:10px;background:rgba(0,0,0,.55);color:#fff;border-radius:8px;padding:2px 8px;white-space:nowrap}
-.crop-controls{display:flex;flex-direction:column;gap:8px}
+.settings-item{display:flex;justify-content:space-between;align-items:center;width:100%;padding:14px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid var(--glass-border);color:var(--text-light);font-size:14px;font-weight:700;cursor:pointer;text-align:left}
+.settings-item:active{transform:scale(.97);background:rgba(255,255,255,.14)}
+.settings-item i{font-style:normal;color:var(--neon-cyan);font-size:20px}
+.settings-page{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1200;background:rgba(5,8,18,.97);display:none;flex-direction:column;padding:calc(12px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px));gap:10px}
+.settings-page.open{display:flex}
+.sp-head{display:flex;align-items:center;gap:12px;color:var(--neon-cyan);font-size:16px}
+.sp-back{width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid var(--glass-border);color:var(--text-light);font-size:20px;cursor:pointer}
+.sp-back:active{transform:scale(.92)}
+.sp-body{flex:1;display:none;flex-direction:column;gap:10px;min-height:0}
+.sp-body.active{display:flex}
+.sp-hint{font-size:11px;color:var(--text-dim);text-align:center}
+.crop-shade{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:8px}
+.crop-empty{position:absolute;top:0;left:0;width:100%;height:100%;display:none;align-items:center;justify-content:center;text-align:center;padding:10px;font-size:12px;color:var(--text-dim);background:radial-gradient(circle at 10% 20%,rgba(5,217,232,.12) 0%,transparent 45%),radial-gradient(circle at 90% 80%,rgba(157,78,221,.12) 0%,transparent 45%),#0a0c16;border-radius:8px}
 </style></head>
 <body>
 <div id="bg-layer"><div id="bg-zoom"><img id="bg-img" alt="" draggable="false"></div><div id="bg-shade"></div></div>
@@ -157,17 +165,7 @@ body{background-color:var(--bg-dark);background-image:radial-gradient(circle at 
 <div id="settings-scrim" class="settings-scrim" onclick="closeSettings()"></div>
 <aside id="settings-drawer" class="settings-drawer">
   <div class="modal-header" style="margin-bottom:0"><h4>⚙️ Ajustes</h4><button class="close-btn" onclick="closeSettings()">&times;</button></div>
-  <div class="settings-section">
-    <h5>🖼️ Fondo de la app</h5>
-    <div id="bg-status" class="arrival-info-box" style="margin-bottom:0;text-align:center"></div>
-    <label for="bg-file" class="btn-action btn-save" style="text-align:center;display:block">📷 Elegir foto</label>
-    <input type="file" id="bg-file" accept="image/*" style="display:none" onchange="onBgFile(event)">
-    <button id="bg-crop-btn" class="btn-action btn-save" style="display:none;background:var(--neon-cyan);box-shadow:0 0 12px var(--neon-cyan-glow)" onclick="openCrop()">✂️ Ajustar encuadre</button>
-    <div style="font-size:10px;color:var(--text-dim);text-align:center">Por defecto la foto se ajusta sola, centrada. Con "Ajustar encuadre" eliges qué parte se ve.</div>
-    <div class="form-group"><label for="bg-dim">Oscurecer: <b id="bg-dim-val">35%</b></label>
-      <input type="range" id="bg-dim" class="bg-range" min="0" max="90" step="5" value="35" oninput="onBgDimInput(this.value)" onchange="saveBackground()"></div>
-    <button class="btn-action btn-delete" onclick="clearBackground()">Quitar foto</button>
-  </div>
+  <button class="settings-item" onclick="openSettingsPage('bg')"><span>🖼️ Imagen de fondo</span><i>›</i></button>
   <div style="font-size:11px;color:var(--text-dim);text-align:center">Más ajustes próximamente…</div>
 </aside>
 <div class="app-container">
@@ -236,19 +234,31 @@ body{background-color:var(--bg-dark);background-image:radial-gradient(circle at 
   </div>
 </div>
 
-<div id="crop-overlay" class="crop-overlay">
-  <div class="crop-head"><b>✂️ Encuadre del fondo</b><small>Arrastra la foto para moverla · pellizca o usa el deslizador para ampliar</small></div>
-  <div id="crop-stage" class="crop-stage">
-    <img id="crop-img" class="crop-img" alt="" draggable="false">
-    <div id="crop-frame" class="crop-frame"><span class="crop-tag">Así se verá en tu pantalla</span></div>
-  </div>
-  <div class="crop-controls">
+<div id="settings-page" class="settings-page">
+  <div class="sp-head"><button class="sp-back" onclick="closeSettingsPage()" aria-label="Atrás">‹</button><b id="sp-title">Ajuste</b></div>
+
+  <div id="sp-bg" class="sp-body">
+    <div id="crop-stage" class="crop-stage">
+      <img id="crop-img" class="crop-img" alt="" draggable="false">
+      <div id="crop-frame" class="crop-frame">
+        <div id="crop-empty" class="crop-empty">Sin foto · se usa el fondo neon original</div>
+        <div id="crop-shade" class="crop-shade"></div>
+        <span class="crop-tag">Así se verá en tu pantalla</span>
+      </div>
+    </div>
+    <div class="sp-hint">Arrastra la foto para moverla · pellizca o usa el zoom para ampliar</div>
     <div class="form-group"><label for="crop-zoom">Zoom <b id="crop-zoom-val">100%</b></label>
-      <input type="range" id="crop-zoom" class="bg-range" style="width:60%" min="100" max="400" step="1" value="100" oninput="onCropZoom(this.value)"></div>
+      <input type="range" id="crop-zoom" class="bg-range" style="width:55%" min="100" max="400" step="1" value="100" oninput="onCropZoom(this.value)"></div>
+    <div class="form-group"><label for="bg-dim">Oscurecer <b id="bg-dim-val">35%</b></label>
+      <input type="range" id="bg-dim" class="bg-range" style="width:55%" min="0" max="90" step="5" value="35" oninput="onDraftDim(this.value)"></div>
+    <input type="file" id="bg-file" accept="image/*" style="display:none" onchange="onBgFile(event)">
     <div class="modal-actions">
-      <button class="btn-action btn-delete" onclick="cropReset()">Restablecer</button>
-      <button class="btn-action btn-delete" style="border-color:var(--text-dim);color:var(--text-light);background:rgba(255,255,255,.08)" onclick="closeCrop()">Cancelar</button>
-      <button class="btn-action btn-save" onclick="applyCrop()">Aplicar</button>
+      <label for="bg-file" class="btn-action btn-save" style="text-align:center;cursor:pointer;background:var(--neon-cyan);box-shadow:0 0 12px var(--neon-cyan-glow)">📷 Elegir foto</label>
+      <button class="btn-action btn-delete" onclick="removeDraftPhoto()">Quitar foto</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-action btn-delete" style="border-color:var(--text-dim);color:var(--text-light);background:rgba(255,255,255,.08)" onclick="cropReset()">Restablecer</button>
+      <button class="btn-action btn-save" onclick="saveBgPage()">Guardar</button>
     </div>
   </div>
 </div>
@@ -566,6 +576,30 @@ function confirmDelete(){
 function closeDeleteModal(e){if(e.target.id==='delete-modal-overlay')forceCloseDeleteModal()}
 function forceCloseDeleteModal(){state.delArmed=false;document.getElementById('delete-modal-overlay').classList.remove('active')}
 
+/* ============ AJUSTES: menú lateral + una página por ajuste ============
+   Cada ajuste del menú abre su propia página (SP_TITLES). Para añadir otro: un botón en el menú,
+   un <div id="sp-NOMBRE" class="sp-body"> en la página y su título aquí. */
+const SP_TITLES={bg:'🖼️ Imagen de fondo'};
+function openSettings(){
+  document.getElementById('settings-drawer').classList.add('open');
+  document.getElementById('settings-scrim').classList.add('open');
+}
+function closeSettings(){
+  document.getElementById('settings-drawer').classList.remove('open');
+  document.getElementById('settings-scrim').classList.remove('open');
+}
+function openSettingsPage(id){
+  closeSettings();
+  document.getElementById('sp-title').innerText=SP_TITLES[id]||'Ajuste';
+  document.querySelectorAll('.sp-body').forEach(x=>x.classList.toggle('active',x.id==='sp-'+id));
+  document.getElementById('settings-page').classList.add('open');
+  if(id==='bg')initBgPage();
+}
+function closeSettingsPage(){
+  document.getElementById('settings-page').classList.remove('open');
+  crop.open=false;crop.pts.clear();crop.pinch=null;
+}
+
 /* ============ FONDO / WALLPAPER ============
    Se guarda aparte de los datos de horas (así "Borrar todo" no quita tu fondo). */
 const BG_KEY='control_horario_bg_v1';
@@ -579,7 +613,7 @@ function screenSize(){
   if(!w||!h||!isFinite(w/h))return [390,844];
   return [w,h];
 }
-/* Geometría de la foto: zoom 1 = cubrir toda la pantalla (igual que antes). px/py = 0..1 (0.5 = centrada) */
+/* Geometría de la foto: zoom 1 = cubrir toda la pantalla. px/py = 0..1 (0.5 = centrada) */
 function bgGeom(W,H,iw,ih,zoom,px,py){
   const sc=Math.max(W/iw,H/ih)*zoom,w=iw*sc,h=ih*sc;
   return {w,h,x:-(w-W)*px,y:-(h-H)*py};
@@ -622,58 +656,20 @@ function applyBackground(){
     t.src=src;
   }
 }
-function updateBgStatus(){
-  document.getElementById('bg-status').innerText=bg.img?'✅ Usando tu foto de fondo':'🌌 Usando el fondo neon original';
-  document.getElementById('bg-dim').value=Math.round(bg.dim*100);
-  document.getElementById('bg-dim-val').innerText=Math.round(bg.dim*100)+'%';
-  document.getElementById('bg-crop-btn').style.display=bg.img?'block':'none';
-}
-function openSettings(){
-  updateBgStatus();
-  document.getElementById('settings-drawer').classList.add('open');
-  document.getElementById('settings-scrim').classList.add('open');
-}
-function closeSettings(){
-  document.getElementById('settings-drawer').classList.remove('open');
-  document.getElementById('settings-scrim').classList.remove('open');
-}
-function onBgDimInput(v){
-  bg.dim=v/100;
-  document.getElementById('bg-dim-val').innerText=v+'%';
-  applyBackground();
-}
-function onBgFile(e){
-  const f=e.target.files&&e.target.files[0];if(!f)return;
-  const rd=new FileReader();
-  rd.onload=()=>{
-    const im=new Image();
-    im.onload=()=>{
-      const sc=Math.min(1,2000/Math.max(im.width,im.height)),cv=document.createElement('canvas');
-      cv.width=Math.round(im.width*sc);cv.height=Math.round(im.height*sc);
-      cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
-      const prev=Object.assign({},bg);
-      Object.assign(bg,{img:cv.toDataURL('image/jpeg',.85),iw:cv.width,ih:cv.height,zoom:1,px:.5,py:.5});
-      if(!saveBackground())Object.assign(bg,prev);
-      applyBackground();updateBgStatus();
-    };
-    im.src=rd.result;
-  };
-  rd.readAsDataURL(f);e.target.value='';
-}
-function clearBackground(){
-  Object.assign(bg,{img:null,iw:0,ih:0,zoom:1,px:.5,py:.5});
-  saveBackground();applyBackground();updateBgStatus();
-}
 
-/* ---------- Editor de encuadre: marco con la proporción de tu pantalla ---------- */
-const crop={open:false,zoom:1,px:.5,py:.5,FW:0,FH:0,fx:0,fy:0,pts:new Map(),pinch:null};
-function cropGeom(z=crop.zoom){return bgGeom(crop.FW,crop.FH,bg.iw,bg.ih,z,crop.px,crop.py)}
-function openCrop(){
-  if(!bg.img||!(bg.iw>0))return;
-  crop.zoom=bg.zoom;crop.px=bg.px;crop.py=bg.py;crop.open=true;
-  closeSettings();
-  document.getElementById('crop-img').src=bg.img;
-  document.getElementById('crop-overlay').classList.add('open');
+/* ---------- Página "Imagen de fondo": se trabaja sobre un borrador y solo se aplica al pulsar Guardar ---------- */
+const draft={img:null,iw:0,ih:0,zoom:1,px:.5,py:.5,dim:.35};
+const crop={open:false,FW:0,FH:0,fx:0,fy:0,pts:new Map(),pinch:null};
+let lastDraftSrc=null;
+function cropGeom(z=draft.zoom){return bgGeom(crop.FW,crop.FH,draft.iw,draft.ih,z,draft.px,draft.py)}
+function initBgPage(){
+  Object.assign(draft,{img:bg.img,iw:bg.iw,ih:bg.ih,zoom:bg.zoom,px:bg.px,py:bg.py,dim:bg.dim});
+  lastDraftSrc=null;crop.open=true;
+  if(draft.img&&!(draft.iw>0)){
+    const src=draft.img,t=new Image();
+    t.onload=()=>{if(draft.img===src&&t.naturalWidth>0){draft.iw=t.naturalWidth;draft.ih=t.naturalHeight;renderCrop()}};
+    t.src=src;
+  }
   requestAnimationFrame(layoutCrop);
 }
 function layoutCrop(){
@@ -686,33 +682,62 @@ function layoutCrop(){
   renderCrop();
 }
 function renderCrop(){
-  const g=cropGeom(),im=document.getElementById('crop-img');
+  const has=!!(draft.img&&draft.iw>0),im=document.getElementById('crop-img');
+  im.style.display=has?'block':'none';
+  document.getElementById('crop-empty').style.display=has?'none':'flex';
+  document.getElementById('crop-shade').style.background=has?`rgba(10,12,22,${draft.dim})`:'transparent';
+  document.getElementById('bg-dim').value=Math.round(draft.dim*100);
+  document.getElementById('bg-dim-val').innerText=Math.round(draft.dim*100)+'%';
+  document.getElementById('crop-zoom').value=Math.round(draft.zoom*100);
+  document.getElementById('crop-zoom-val').innerText=Math.round(draft.zoom*100)+'%';
+  if(!has)return;
+  if(lastDraftSrc!==draft.img){im.src=draft.img;lastDraftSrc=draft.img}
+  const g=cropGeom();
   im.style.width=g.w+'px';im.style.height=g.h+'px';
   im.style.left=(crop.fx+g.x)+'px';im.style.top=(crop.fy+g.y)+'px';
-  document.getElementById('crop-zoom').value=Math.round(crop.zoom*100);
-  document.getElementById('crop-zoom-val').innerText=Math.round(crop.zoom*100)+'%';
 }
 function setCropZoom(z){
+  if(!(draft.iw>0))return;
   z=clamp(z,1,4);
   const g=cropGeom(),cx=(crop.FW/2-g.x)/g.w,cy=(crop.FH/2-g.y)/g.h;
-  crop.zoom=z;
+  draft.zoom=z;
   const g2=cropGeom(),nx=crop.FW/2-cx*g2.w,ny=crop.FH/2-cy*g2.h;
-  crop.px=g2.w-crop.FW>.5?clamp(-nx/(g2.w-crop.FW),0,1):.5;
-  crop.py=g2.h-crop.FH>.5?clamp(-ny/(g2.h-crop.FH),0,1):.5;
+  draft.px=g2.w-crop.FW>.5?clamp(-nx/(g2.w-crop.FW),0,1):.5;
+  draft.py=g2.h-crop.FH>.5?clamp(-ny/(g2.h-crop.FH),0,1):.5;
   renderCrop();
 }
 function onCropZoom(v){setCropZoom(v/100)}
 function moveCrop(dx,dy){
+  if(!(draft.iw>0))return;
   const g=cropGeom(),nx=g.x+dx,ny=g.y+dy;
-  if(g.w-crop.FW>.5)crop.px=clamp(-nx/(g.w-crop.FW),0,1);
-  if(g.h-crop.FH>.5)crop.py=clamp(-ny/(g.h-crop.FH),0,1);
+  if(g.w-crop.FW>.5)draft.px=clamp(-nx/(g.w-crop.FW),0,1);
+  if(g.h-crop.FH>.5)draft.py=clamp(-ny/(g.h-crop.FH),0,1);
   renderCrop();
 }
-function cropReset(){crop.zoom=1;crop.px=.5;crop.py=.5;renderCrop()}
-function closeCrop(){crop.open=false;crop.pts.clear();crop.pinch=null;document.getElementById('crop-overlay').classList.remove('open')}
-function applyCrop(){
-  bg.zoom=crop.zoom;bg.px=crop.px;bg.py=crop.py;
-  saveBackground();applyBackground();closeCrop();
+function cropReset(){draft.zoom=1;draft.px=.5;draft.py=.5;renderCrop()}
+function onDraftDim(v){draft.dim=v/100;renderCrop()}
+function removeDraftPhoto(){Object.assign(draft,{img:null,iw:0,ih:0,zoom:1,px:.5,py:.5});renderCrop()}
+function onBgFile(e){
+  const f=e.target.files&&e.target.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    const im=new Image();
+    im.onload=()=>{
+      const sc=Math.min(1,2000/Math.max(im.width,im.height)),cv=document.createElement('canvas');
+      cv.width=Math.round(im.width*sc);cv.height=Math.round(im.height*sc);
+      cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
+      Object.assign(draft,{img:cv.toDataURL('image/jpeg',.85),iw:cv.width,ih:cv.height,zoom:1,px:.5,py:.5});
+      renderCrop();
+    };
+    im.src=rd.result;
+  };
+  rd.readAsDataURL(f);e.target.value='';
+}
+function saveBgPage(){
+  const prev=Object.assign({},bg);
+  Object.assign(bg,{img:draft.img,iw:draft.iw,ih:draft.ih,zoom:draft.zoom,px:draft.px,py:draft.py,dim:draft.dim});
+  if(!saveBackground()){Object.assign(bg,prev);return}
+  applyBackground();closeSettingsPage();
 }
 (function initCropEvents(){
   const st=document.getElementById('crop-stage');if(!st)return;
@@ -720,7 +745,7 @@ function applyCrop(){
   st.addEventListener('pointerdown',e=>{
     try{st.setPointerCapture(e.pointerId)}catch(_){}
     crop.pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(crop.pts.size===2)crop.pinch={d:pd(),z:crop.zoom};
+    if(crop.pts.size===2)crop.pinch={d:pd(),z:draft.zoom};
   });
   st.addEventListener('pointermove',e=>{
     const p=crop.pts.get(e.pointerId);if(!p)return;
@@ -732,7 +757,7 @@ function applyCrop(){
   const end=e=>{crop.pts.delete(e.pointerId);crop.pinch=null};
   st.addEventListener('pointerup',end);
   st.addEventListener('pointercancel',end);
-  st.addEventListener('wheel',e=>{e.preventDefault();setCropZoom(crop.zoom*(e.deltaY<0?1.08:1/1.08))},{passive:false});
+  st.addEventListener('wheel',e=>{e.preventDefault();setCropZoom(draft.zoom*(e.deltaY<0?1.08:1/1.08))},{passive:false});
   window.addEventListener('resize',()=>{if(crop.open)layoutCrop()});
 })();
 
