@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Control Horario - Neon 3D Native App</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -9,7 +9,7 @@
 <style>
 :root{--bg-dark:#0a0c16;--card-bg:rgba(20,25,45,.75);--neon-green:#00ff88;--neon-green-glow:rgba(0,255,136,.45);--neon-red:#ff2a6d;--neon-red-glow:rgba(255,42,109,.45);--neon-cyan:#05d9e8;--neon-cyan-glow:rgba(5,217,232,.45);--neon-purple:#9d4edd;--neon-orange:#ff9100;--text-light:#f0f3f8;--text-dim:#8a99ad;--glass-border:rgba(255,255,255,.12)}
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent!important;outline:none!important}
-body{background-color:var(--bg-dark);background-image:radial-gradient(circle at 10% 20%,rgba(5,217,232,.08) 0%,transparent 40%),radial-gradient(circle at 90% 80%,rgba(157,78,221,.08) 0%,transparent 40%);color:var(--text-light);min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding-bottom:90px;overflow-x:hidden}
+body{background-color:var(--bg-dark);background-image:radial-gradient(circle at 10% 20%,rgba(5,217,232,.08) 0%,transparent 40%),radial-gradient(circle at 90% 80%,rgba(157,78,221,.08) 0%,transparent 40%);color:var(--text-light);min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding-bottom:calc(90px + env(safe-area-inset-bottom,0px));overflow-x:hidden}
 .app-container{width:100%;max-width:440px;padding:16px;display:flex;flex-direction:column;gap:18px}
 .page{display:none;flex-direction:column;gap:18px;animation:fadeIn .25s ease-out}
 .page.active{display:flex}
@@ -109,7 +109,7 @@ body{background-color:var(--bg-dark);background-image:radial-gradient(circle at 
 .ok-card{border-color:var(--neon-green)}.ok-card h5{color:var(--neon-green)}
 .rules{font-size:11px;color:var(--text-dim);line-height:1.55;background:var(--card-bg);border:1px solid var(--glass-border);border-radius:14px;padding:12px}
 .rules b{color:var(--neon-cyan)}
-.bottom-nav{position:fixed;bottom:15px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:400px;background:rgba(15,20,38,.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:30px;padding:6px;display:flex;justify-content:space-around;box-shadow:0 10px 25px rgba(0,0,0,.6);z-index:100}
+.bottom-nav{position:fixed;bottom:calc(15px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:400px;background:rgba(15,20,38,.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:30px;padding:6px;display:flex;justify-content:space-around;box-shadow:0 10px 25px rgba(0,0,0,.6);z-index:100}
 .nav-item{flex:1;padding:10px 2px;border:none;background:transparent;color:var(--text-dim);font-size:10px;font-weight:bold;border-radius:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:2px;transition:all .2s}
 .nav-item.active{color:var(--bg-dark);background:var(--neon-cyan);box-shadow:0 0 15px rgba(5,217,232,.6)}
 .month-card{cursor:pointer}.month-card:active{transform:scale(.98)}
@@ -128,20 +128,20 @@ body{background-color:var(--bg-dark);background-image:radial-gradient(circle at 
 #bg-layer{position:fixed;top:0;left:0;width:100%;height:100vh;height:100lvh;z-index:-1;overflow:hidden;display:none;pointer-events:none}
 #bg-zoom{position:absolute;top:0;left:0;width:100%;height:100%}
 #bg-img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 50%;pointer-events:none}
-#bg-dim{position:absolute;top:0;left:0;width:100%;height:100%}
+#bg-shade{position:absolute;top:0;left:0;width:100%;height:100%}
 .bg-range{width:140px;accent-color:var(--neon-cyan)}
-.app-container{padding-top:62px}
-.menu-btn{position:fixed;top:14px;left:14px;z-index:90;width:42px;height:42px;border-radius:14px;background:rgba(20,25,45,.45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--glass-border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35);transition:transform .15s ease}
+.app-container{padding-top:calc(62px + env(safe-area-inset-top,0px))}
+.menu-btn{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:14px;z-index:90;width:42px;height:42px;border-radius:14px;background:rgba(20,25,45,.45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--glass-border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35);transition:transform .15s ease}
 .menu-btn:active{transform:scale(.92)}
 .menu-btn span{display:block;width:20px;height:2px;border-radius:2px;background:var(--text-light);opacity:.9}
 .settings-scrim{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4);z-index:1100;opacity:0;pointer-events:none;transition:opacity .25s ease}
 .settings-scrim.open{opacity:1;pointer-events:auto}
-.settings-drawer{position:fixed;top:0;left:0;height:100%;width:min(310px,84vw);z-index:1110;background:rgba(15,20,38,.55);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-right:1px solid rgba(255,255,255,.16);box-shadow:8px 0 30px rgba(0,0,0,.5);padding:18px 16px;display:flex;flex-direction:column;gap:14px;transform:translateX(-105%);transition:transform .3s cubic-bezier(.22,1,.36,1);overflow-y:auto}
+.settings-drawer{position:fixed;top:0;left:0;height:100%;width:min(310px,84vw);z-index:1110;background:rgba(15,20,38,.55);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-right:1px solid rgba(255,255,255,.16);box-shadow:8px 0 30px rgba(0,0,0,.5);padding:calc(18px + env(safe-area-inset-top,0px)) 16px calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px;transform:translateX(-105%);transition:transform .3s cubic-bezier(.22,1,.36,1);overflow-y:auto}
 .settings-drawer.open{transform:translateX(0)}
 .settings-section{background:rgba(255,255,255,.05);border:1px solid var(--glass-border);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:10px}
 .settings-section h5{font-size:13px;color:var(--neon-cyan)}
 
-.crop-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1200;background:rgba(5,8,18,.96);display:none;flex-direction:column;padding:12px;gap:10px}
+.crop-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1200;background:rgba(5,8,18,.96);display:none;flex-direction:column;padding:calc(12px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px));gap:10px}
 .crop-overlay.open{display:flex}
 .crop-head{display:flex;flex-direction:column;gap:2px;text-align:center;color:var(--neon-cyan);font-size:15px;padding-top:4px}
 .crop-head small{color:var(--text-dim);font-size:11px}
@@ -152,7 +152,7 @@ body{background-color:var(--bg-dark);background-image:radial-gradient(circle at 
 .crop-controls{display:flex;flex-direction:column;gap:8px}
 </style></head>
 <body>
-<div id="bg-layer"><div id="bg-zoom"><img id="bg-img" alt="" draggable="false"></div><div id="bg-dim"></div></div>
+<div id="bg-layer"><div id="bg-zoom"><img id="bg-img" alt="" draggable="false"></div><div id="bg-shade"></div></div>
 <button id="menu-btn" class="menu-btn" onclick="openSettings()" aria-label="Ajustes"><span></span><span></span><span></span></button>
 <div id="settings-scrim" class="settings-scrim" onclick="closeSettings()"></div>
 <aside id="settings-drawer" class="settings-drawer">
@@ -607,7 +607,7 @@ let lastBgSrc=null;
    cuando el navegador esconde o muestra la barra de direcciones al hacer scroll. */
 function applyBackground(){
   const el=document.getElementById('bg-layer');if(!el)return;
-  const im=document.getElementById('bg-img'),zw=document.getElementById('bg-zoom'),dm=document.getElementById('bg-dim');
+  const im=document.getElementById('bg-img'),zw=document.getElementById('bg-zoom'),dm=document.getElementById('bg-shade');
   if(!bg.img){el.style.display='none';return}
   if(lastBgSrc!==bg.img){im.src=bg.img;lastBgSrc=bg.img}
   el.style.display='block';
