@@ -174,6 +174,104 @@ body{background-color:var(--bg-dark);background-image:radial-gradient(circle at 
 .toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(10px);max-width:calc(100% - 40px);background:rgba(15,20,38,.96);border:1px solid var(--neon-cyan);color:var(--text-light);border-radius:14px;padding:10px 14px;font-size:calc(12px * var(--fs));text-align:center;z-index:1400;opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease}
 .toast.show{opacity:1;transform:translateX(-50%)}
 input[type=checkbox]{width:24px;height:24px;accent-color:var(--neon-cyan);flex-shrink:0}
+
+/* ================= PIEL METALIZADA 3D (se adapta al color elegido) ================= */
+:root{
+--text-dim:#a9b6c9;
+--cy-hi:color-mix(in srgb,var(--neon-cyan) 52%,#fff);--cy-lo:color-mix(in srgb,var(--neon-cyan) 55%,#000);
+--gr-hi:color-mix(in srgb,var(--neon-green) 52%,#fff);--gr-lo:color-mix(in srgb,var(--neon-green) 55%,#000);
+--wk-hi:color-mix(in srgb,var(--work-c) 52%,#fff);--wk-lo:color-mix(in srgb,var(--work-c) 55%,#000);
+--st1:color-mix(in srgb,color-mix(in srgb,var(--neon-cyan) 12%,#343d56) 93%,transparent);
+--st2:color-mix(in srgb,color-mix(in srgb,var(--neon-cyan) 8%,#1d2438) 93%,transparent);
+--st3:color-mix(in srgb,color-mix(in srgb,var(--neon-cyan) 6%,#0e1325) 94%,transparent);
+--st4:color-mix(in srgb,color-mix(in srgb,var(--neon-cyan) 8%,#182036) 93%,transparent);
+--plate:linear-gradient(180deg,rgba(255,255,255,.17) 0,rgba(255,255,255,.05) 30%,rgba(255,255,255,0) 48%,rgba(0,0,0,.24) 100%),repeating-linear-gradient(90deg,rgba(255,255,255,.03) 0 1px,rgba(0,0,0,0) 1px 3px),linear-gradient(155deg,var(--st1) 0%,var(--st2) 32%,var(--st3) 64%,var(--st4) 100%);
+--bevel:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -2px 4px rgba(0,0,0,.6),inset 1px 0 0 rgba(255,255,255,.09),inset -1px 0 0 rgba(0,0,0,.4);
+--lift:0 12px 26px rgba(0,0,0,.55),0 3px 6px rgba(0,0,0,.5);
+--keys:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.05) 48%,rgba(0,0,0,.3));
+}
+@supports not (color:color-mix(in srgb,red 50%,blue)){
+:root{--cy-hi:#8ef3fb;--cy-lo:#038a94;--gr-hi:#80ffc4;--gr-lo:#00a058;--wk-hi:#ff95b6;--wk-lo:#a1163f;--st1:rgba(52,61,86,.93);--st2:rgba(29,36,56,.93);--st3:rgba(14,19,37,.94);--st4:rgba(24,32,54,.93)}
+}
+.page-title,.calendar-header h3,.year-nav{text-shadow:0 1px 0 rgba(255,255,255,.22),0 2px 7px rgba(0,0,0,.75)}
+.calendar-card,.month-card,.stat-card,.sum-box,.rules{background:var(--plate);border:1px solid rgba(255,255,255,.13);border-top-color:rgba(255,255,255,.32);border-bottom-color:rgba(0,0,0,.55);box-shadow:var(--bevel),var(--lift)}
+.al-card{background:var(--plate);box-shadow:var(--bevel),0 8px 18px rgba(0,0,0,.5)}
+.settings-section{background:var(--plate);border:1px solid rgba(255,255,255,.13);border-top-color:rgba(255,255,255,.3);border-bottom-color:rgba(0,0,0,.55);box-shadow:var(--bevel),0 5px 12px rgba(0,0,0,.45)}
+.sum-box{box-shadow:var(--bevel),0 4px 9px rgba(0,0,0,.45)}
+.glass-modal{background:var(--plate);border:1px solid rgba(255,255,255,.2);border-top-color:rgba(255,255,255,.45);border-bottom-color:rgba(0,0,0,.6);box-shadow:var(--bevel),0 24px 48px rgba(0,0,0,.85),0 0 22px rgba(var(--accent-rgb),.14)}
+.modal-header{border-bottom:1px solid rgba(0,0,0,.55);box-shadow:0 1px 0 rgba(255,255,255,.14)}
+.settings-drawer{background:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,0) 18%),repeating-linear-gradient(90deg,rgba(255,255,255,.03) 0 1px,rgba(0,0,0,0) 1px 3px),linear-gradient(160deg,rgba(64,74,104,.74),rgba(20,26,46,.84) 55%,rgba(10,14,28,.9));border-right:1px solid rgba(255,255,255,.32);box-shadow:inset -2px 0 3px rgba(0,0,0,.55),inset 1px 0 0 rgba(255,255,255,.2),10px 0 30px rgba(0,0,0,.55)}
+.settings-page{background:radial-gradient(circle at 12% 0,rgba(var(--accent-rgb),.12),transparent 42%),linear-gradient(180deg,#0b1020,#050812)}
+
+/* Botón de las tres rayitas: SIEMPRE igual, no usa el color elegido */
+.menu-btn{border:1.5px solid rgba(238,243,252,.8);background:linear-gradient(155deg,rgba(255,255,255,.42) 0%,rgba(170,180,200,.2) 38%,rgba(40,46,64,.5) 100%),rgba(22,27,44,.42);-webkit-backdrop-filter:blur(10px) saturate(1.3);backdrop-filter:blur(10px) saturate(1.3);box-shadow:inset 0 1px 0 rgba(255,255,255,.8),inset 0 -3px 5px rgba(0,0,0,.5),inset 0 0 8px rgba(255,255,255,.12),0 0 0 1px rgba(0,0,0,.55),0 7px 15px rgba(0,0,0,.6)}
+.menu-btn:active{box-shadow:inset 0 2px 6px rgba(0,0,0,.65),0 0 0 1px rgba(0,0,0,.55),0 2px 5px rgba(0,0,0,.6)}
+.menu-btn span{background:linear-gradient(180deg,#ffffff,#aab4c6);box-shadow:0 1px 2px rgba(0,0,0,.85),0 0 0 .5px rgba(0,0,0,.45)}
+
+/* Botón grande: bisel cromado + cara de cristal + reflejo */
+.big-3d-button{--st-rgb:var(--ok-rgb);isolation:isolate;border:9px solid transparent;padding:2px;
+background:radial-gradient(circle at 50% 120%,rgba(var(--st-rgb),.36),rgba(var(--st-rgb),0) 58%) padding-box,radial-gradient(circle at 36% 18%,rgba(255,255,255,.2),rgba(255,255,255,0) 36%) padding-box,radial-gradient(circle at 50% 42%,#202d4b 0%,#0d1325 62%,#050813 100%) padding-box,linear-gradient(rgba(var(--st-rgb),.16),rgba(var(--st-rgb),.16)) border-box,conic-gradient(from 20deg,#f4f8ff,#8892a8 11%,#2b3348 24%,#b8c2d6 37%,#3a435b 50%,#f6f9ff 62%,#707b95 76%,#272e43 89%,#f4f8ff) border-box;
+box-shadow:inset 0 0 0 3px rgba(var(--st-rgb),.9),inset 0 0 22px 3px rgba(var(--st-rgb),.5),inset 0 10px 14px rgba(0,0,0,.65),0 0 26px rgba(var(--st-rgb),.5),0 -1px 0 rgba(255,255,255,.45),0 16px 26px rgba(0,0,0,.75)}
+.big-3d-button::before{content:"";position:absolute;z-index:-1;top:2%;left:13%;width:74%;height:42%;border-radius:50% 50% 46% 46%/60% 60% 40% 40%;background:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,.05) 70%,rgba(255,255,255,0));pointer-events:none}
+.big-3d-button:active{transform:scale(.94);box-shadow:inset 0 0 0 3px rgba(var(--st-rgb),.9),inset 0 0 30px 6px rgba(var(--st-rgb),.6),inset 0 14px 20px rgba(0,0,0,.8),0 0 14px rgba(var(--st-rgb),.4),0 6px 10px rgba(0,0,0,.8)}
+.big-3d-button.working{--st-rgb:var(--work-rgb);border-color:transparent;box-shadow:inset 0 0 0 3px rgba(var(--st-rgb),.9),inset 0 0 22px 3px rgba(var(--st-rgb),.5),inset 0 10px 14px rgba(0,0,0,.65),0 0 34px rgba(var(--st-rgb),.5),0 16px 26px rgba(0,0,0,.75)}
+@keyframes pulse-red-glow{0%{box-shadow:inset 0 0 0 3px rgba(var(--st-rgb),.85),inset 0 0 16px 2px rgba(var(--st-rgb),.35),inset 0 10px 14px rgba(0,0,0,.65),0 0 20px rgba(var(--st-rgb),.35),0 -1px 0 rgba(255,255,255,.4),0 14px 24px rgba(0,0,0,.75);transform:scale(1)}100%{box-shadow:inset 0 0 0 3px rgba(var(--st-rgb),.95),inset 0 0 30px 5px rgba(var(--st-rgb),.6),inset 0 10px 14px rgba(0,0,0,.65),0 0 46px rgba(var(--st-rgb),.6),0 -1px 0 rgba(255,255,255,.5),0 18px 30px rgba(0,0,0,.85);transform:scale(1.02)}}
+
+/* Calendario: teclas metálicas */
+.day-cell:not(.empty){background:linear-gradient(180deg,rgba(255,255,255,.17),rgba(255,255,255,.03) 46%,rgba(0,0,0,.3)),rgba(40,48,72,.6);border:1px solid rgba(255,255,255,.13);border-top-color:rgba(255,255,255,.3);border-bottom-color:rgba(0,0,0,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -2px 3px rgba(0,0,0,.5),0 3px 5px rgba(0,0,0,.5)}
+.day-cell.worked{background:linear-gradient(180deg,rgba(var(--ok-rgb),.46),rgba(var(--ok-rgb),.14) 52%,rgba(0,0,0,.32)),rgba(28,38,58,.7);border-color:rgba(var(--ok-rgb),.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -2px 3px rgba(0,0,0,.5),0 3px 6px rgba(0,0,0,.5),0 0 10px rgba(var(--ok-rgb),.32)}
+.day-cell.overnight-end{background:linear-gradient(180deg,rgba(var(--accent-rgb),.4),rgba(var(--accent-rgb),.12) 52%,rgba(0,0,0,.32)),rgba(28,38,58,.7);border-color:rgba(var(--accent-rgb),.6)}
+.day-cell.live{background:linear-gradient(180deg,rgba(var(--work-rgb),.46),rgba(var(--work-rgb),.14) 52%,rgba(0,0,0,.32)),rgba(28,38,58,.7);border-color:var(--work-c);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -2px 3px rgba(0,0,0,.5),0 3px 6px rgba(0,0,0,.5),0 0 12px rgba(var(--work-rgb),.4)}
+.day-cell.today{border-color:var(--neon-cyan);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -2px 3px rgba(0,0,0,.5),0 0 0 2px rgba(var(--accent-rgb),.75),0 0 13px rgba(var(--accent-rgb),.5),0 3px 6px rgba(0,0,0,.5)}
+.day-cell:not(.empty):active{transform:translateY(1px) scale(.94);box-shadow:inset 0 3px 6px rgba(0,0,0,.7),0 1px 2px rgba(0,0,0,.5)}
+.green-dot{background:radial-gradient(circle at 35% 30%,#fff,var(--neon-green) 55%);box-shadow:0 0 6px var(--neon-green),0 1px 2px rgba(0,0,0,.6)}
+.live .green-dot{background:radial-gradient(circle at 35% 30%,#fff,var(--work-c) 55%);box-shadow:0 0 6px var(--work-c),0 1px 2px rgba(0,0,0,.6)}
+.jornada-badge{background:linear-gradient(180deg,rgba(var(--ok-rgb),.4),rgba(var(--ok-rgb),.1));box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+.live .jornada-badge{background:linear-gradient(180deg,rgba(var(--work-rgb),.4),rgba(var(--work-rgb),.1))}
+
+/* Botones */
+.btn-action{border:1px solid rgba(255,255,255,.3);border-bottom-color:rgba(0,0,0,.55);transition:transform .12s ease,box-shadow .12s ease,filter .12s ease}
+.btn-action:active{transform:translateY(1px) scale(.97);filter:brightness(.92)}
+.btn-save{background:linear-gradient(180deg,var(--gr-hi) 0%,var(--neon-green) 46%,var(--gr-lo) 100%);color:#000;text-shadow:0 1px 0 rgba(255,255,255,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.8),inset 0 -3px 5px rgba(0,0,0,.4),0 4px 9px rgba(0,0,0,.55),0 0 14px var(--neon-green-glow)}
+.btn-save.btn-cyan{background:linear-gradient(180deg,var(--cy-hi) 0%,var(--neon-cyan) 46%,var(--cy-lo) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.8),inset 0 -3px 5px rgba(0,0,0,.4),0 4px 9px rgba(0,0,0,.55),0 0 14px var(--neon-cyan-glow)}
+.btn-delete{background:linear-gradient(180deg,rgba(255,120,155,.42),rgba(255,42,109,.16) 50%,rgba(110,8,38,.4));border:1px solid rgba(255,42,109,.85);border-bottom-color:rgba(0,0,0,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.38),inset 0 -2px 4px rgba(0,0,0,.5),0 3px 8px rgba(0,0,0,.5)}
+.btn-delete.armed{background:linear-gradient(180deg,#ff9bb7 0%,var(--neon-red) 46%,#a3123f 100%);color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -3px 5px rgba(0,0,0,.4),0 4px 9px rgba(0,0,0,.55),0 0 16px var(--neon-red-glow)}
+.btn-action.btn-ghost{background:var(--keys),rgba(70,80,108,.62);color:var(--text-light);border:1px solid rgba(255,255,255,.28);border-bottom-color:rgba(0,0,0,.55);text-shadow:0 1px 1px rgba(0,0,0,.6);box-shadow:inset 0 1px 0 rgba(255,255,255,.38),inset 0 -2px 4px rgba(0,0,0,.5),0 3px 8px rgba(0,0,0,.5)}
+.btn-manual-edit{background:var(--keys),var(--st2);color:var(--neon-cyan);text-shadow:0 1px 1px rgba(0,0,0,.75);border:1px solid rgba(var(--accent-rgb),.85);border-bottom-color:rgba(0,0,0,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.42),inset 0 -2px 4px rgba(0,0,0,.55),0 4px 10px rgba(0,0,0,.55),0 0 10px rgba(var(--accent-rgb),.22)}
+.btn-manual-edit:active{background:linear-gradient(180deg,var(--cy-hi),var(--neon-cyan) 50%,var(--cy-lo));color:#0a0c16;text-shadow:none;box-shadow:inset 0 2px 5px rgba(0,0,0,.45),0 1px 2px rgba(0,0,0,.5)}
+.btn-add{background:var(--keys),var(--st2);color:var(--neon-green);text-shadow:0 1px 1px rgba(0,0,0,.75);border:1px solid rgba(var(--ok-rgb),.85);border-bottom-color:rgba(0,0,0,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.42),inset 0 -2px 4px rgba(0,0,0,.55),0 4px 10px rgba(0,0,0,.55),0 0 10px rgba(var(--ok-rgb),.2)}
+.btn-add:active{transform:translateY(1px) scale(.97);box-shadow:inset 0 2px 5px rgba(0,0,0,.65),0 1px 2px rgba(0,0,0,.5)}
+.nav-btn,.sp-back{background:var(--keys),rgba(70,80,108,.6);border:1px solid rgba(255,255,255,.22);border-top-color:rgba(255,255,255,.4);border-bottom-color:rgba(0,0,0,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -2px 3px rgba(0,0,0,.5),0 3px 6px rgba(0,0,0,.5)}
+.nav-btn:active,.sp-back:active{transform:translateY(1px) scale(.94);box-shadow:inset 0 2px 5px rgba(0,0,0,.7)}
+.settings-item{background:var(--keys),rgba(58,68,96,.62);border:1px solid rgba(255,255,255,.2);border-top-color:rgba(255,255,255,.38);border-bottom-color:rgba(0,0,0,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.34),inset 0 -2px 4px rgba(0,0,0,.5),0 5px 10px rgba(0,0,0,.5)}
+.settings-item:active{background:var(--keys),rgba(40,48,72,.7);transform:translateY(1px) scale(.98);box-shadow:inset 0 3px 6px rgba(0,0,0,.7)}
+.chip{background:linear-gradient(180deg,rgba(255,255,255,.3),rgba(var(--accent-rgb),.22) 50%,rgba(0,0,0,.32));border:1px solid rgba(var(--accent-rgb),.85);border-bottom-color:rgba(0,0,0,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -2px 3px rgba(0,0,0,.45),0 3px 6px rgba(0,0,0,.5)}
+.swatch{position:relative;box-shadow:inset 0 -3px 5px rgba(0,0,0,.45),0 3px 6px rgba(0,0,0,.6)}
+.swatch::after{content:"";position:absolute;left:0;top:0;right:0;bottom:0;border-radius:50%;background:radial-gradient(circle at 32% 24%,rgba(255,255,255,.8),rgba(255,255,255,0) 42%),radial-gradient(circle at 50% 115%,rgba(0,0,0,.5),rgba(0,0,0,0) 60%);pointer-events:none}
+.swatch.sel{border-color:#fff;box-shadow:inset 0 -3px 5px rgba(0,0,0,.45),0 0 14px currentColor,0 3px 6px rgba(0,0,0,.6)}
+.color-pick{box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 3px 6px rgba(0,0,0,.5)}
+
+/* Navegación inferior */
+.bottom-nav{background:linear-gradient(180deg,rgba(130,142,168,.58) 0,rgba(44,52,76,.84) 32%,rgba(14,18,32,.94) 100%);border:1px solid rgba(255,255,255,.2);border-top-color:rgba(255,255,255,.5);border-bottom-color:rgba(0,0,0,.65);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -3px 6px rgba(0,0,0,.55),0 12px 26px rgba(0,0,0,.7),0 2px 4px rgba(0,0,0,.6)}
+.nav-item{text-shadow:0 1px 1px rgba(0,0,0,.7)}
+.nav-item.active{color:#0a0c16;text-shadow:0 1px 0 rgba(255,255,255,.5);background:linear-gradient(180deg,var(--cy-hi) 0%,var(--neon-cyan) 46%,var(--cy-lo) 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.8),inset 0 -3px 5px rgba(0,0,0,.4),0 3px 8px rgba(0,0,0,.55),0 0 14px rgba(var(--accent-rgb),.55)}
+
+/* Campos hundidos y cajas */
+.form-group{background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.02) 50%,rgba(0,0,0,.22));border:1px solid rgba(255,255,255,.12);border-top-color:rgba(255,255,255,.22);border-bottom-color:rgba(0,0,0,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.15),inset 0 -1px 2px rgba(0,0,0,.4),0 2px 4px rgba(0,0,0,.35)}
+.form-input,.month-select{background:linear-gradient(180deg,rgba(0,0,0,.62),rgba(12,16,32,.92));border:1px solid rgba(255,255,255,.14);border-top-color:rgba(0,0,0,.65);box-shadow:inset 0 2px 5px rgba(0,0,0,.8),0 1px 0 rgba(255,255,255,.16)}
+.shift-summary-card,.arrival-info-box,.live-note,.night-pay-box,.overnight-badge,.del-preview,.verdict{box-shadow:inset 0 1px 0 rgba(255,255,255,.26),inset 0 -2px 4px rgba(0,0,0,.35),0 3px 8px rgba(0,0,0,.4)}
+.shift-summary-card{background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,0) 50%),linear-gradient(135deg,rgba(var(--ok-rgb),.2),rgba(var(--accent-rgb),.16))}
+.al-rec{box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 4px rgba(0,0,0,.4)}
+
+/* Barras: tubo de cristal */
+.bar-track{height:12px;background:rgba(0,0,0,.5);border:1px solid rgba(0,0,0,.6);box-shadow:inset 0 2px 4px rgba(0,0,0,.85),0 1px 0 rgba(255,255,255,.14)}
+.bar-fill.work{background:linear-gradient(180deg,rgba(255,255,255,.55) 0,rgba(255,255,255,.08) 46%,rgba(0,0,0,.3) 100%),linear-gradient(90deg,var(--gr-lo),var(--neon-green));box-shadow:0 0 10px var(--neon-green-glow),inset 0 1px 0 rgba(255,255,255,.6)}
+.bar-fill.rest{background:linear-gradient(180deg,rgba(255,255,255,.55) 0,rgba(255,255,255,.08) 46%,rgba(0,0,0,.3) 100%),linear-gradient(90deg,var(--wk-lo),var(--work-c));box-shadow:0 0 10px var(--work-glow),inset 0 1px 0 rgba(255,255,255,.6)}
+
+/* Aviso naranja y aviso emergente */
+.alert-banner{background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,0) 48%),linear-gradient(135deg,#ffa238,#ff5e00);border:1px solid rgba(255,255,255,.4);border-bottom-color:rgba(0,0,0,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -3px 5px rgba(0,0,0,.25),0 6px 14px rgba(0,0,0,.5),0 0 20px rgba(255,140,0,.55);animation:warnPulse 2s ease-in-out infinite alternate}
+@keyframes warnPulse{from{box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -3px 5px rgba(0,0,0,.25),0 6px 14px rgba(0,0,0,.5),0 0 10px rgba(255,140,0,.4)}to{box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -3px 5px rgba(0,0,0,.25),0 6px 14px rgba(0,0,0,.5),0 0 28px rgba(255,140,0,.9)}}
+.toast{background:var(--plate);border:1px solid rgba(var(--accent-rgb),.8);box-shadow:var(--bevel),0 8px 18px rgba(0,0,0,.6)}
 </style></head>
 <body>
 <div id="bg-layer"><div id="bg-zoom"><img id="bg-img" alt="" draggable="false"></div><div id="bg-shade"></div></div>
@@ -272,11 +370,11 @@ input[type=checkbox]{width:24px;height:24px;accent-color:var(--neon-cyan);flex-s
       <input type="range" id="bg-dim" class="bg-range" style="width:55%" min="0" max="90" step="5" value="35" oninput="onDraftDim(this.value)"></div>
     <input type="file" id="bg-file" accept="image/*" style="display:none" onchange="onBgFile(event)">
     <div class="modal-actions">
-      <label for="bg-file" class="btn-action btn-save" style="text-align:center;cursor:pointer;background:var(--neon-cyan);box-shadow:0 0 12px var(--neon-cyan-glow)">📷 Elegir foto</label>
+      <label for="bg-file" class="btn-action btn-save btn-cyan" style="text-align:center;cursor:pointer">📷 Elegir foto</label>
       <button class="btn-action btn-delete" onclick="removeDraftPhoto()">Quitar foto</button>
     </div>
     <div class="modal-actions">
-      <button class="btn-action btn-delete" style="border-color:var(--text-dim);color:var(--text-light);background:rgba(255,255,255,.08)" onclick="cropReset()">Restablecer</button>
+      <button class="btn-action btn-delete btn-ghost" onclick="cropReset()">Restablecer</button>
       <button class="btn-action btn-save" onclick="saveBgPage()">Guardar</button>
     </div>
   </div>
@@ -352,7 +450,7 @@ input[type=checkbox]{width:24px;height:24px;accent-color:var(--neon-cyan);flex-s
       <label for="st-import" class="btn-action btn-delete" style="text-align:center;cursor:pointer;display:block">⬆️ Cargar copia desde un archivo</label>
       <input type="file" id="st-import" accept=".json,application/json" style="display:none" onchange="onImportFile(event)">
       <div id="st-import-box" class="arrival-info-box" style="display:none;margin-bottom:0"></div>
-      <div id="st-import-actions" class="modal-actions" style="display:none"><button class="btn-action btn-delete" style="border-color:var(--text-dim);color:var(--text-light);background:rgba(255,255,255,.08)" onclick="cancelImport()">Cancelar</button><button class="btn-action btn-save" onclick="confirmImport()">Restaurar</button></div>
+      <div id="st-import-actions" class="modal-actions" style="display:none"><button class="btn-action btn-delete btn-ghost" onclick="cancelImport()">Cancelar</button><button class="btn-action btn-save" onclick="confirmImport()">Restaurar</button></div>
       <div id="st-backup-msg" class="st-msg">La copia incluye jornadas, meses editados, ajustes y tu foto de fondo.</div>
     </div>
     <div class="settings-section">
@@ -379,7 +477,7 @@ input[type=checkbox]{width:24px;height:24px;accent-color:var(--neon-cyan);flex-s
         <input type="month" id="del-month" class="form-input" style="font-size:calc(12px * var(--fs));" onchange="updateDeletePreview()"></div>
       <div id="del-preview" class="del-preview"></div>
       <div class="modal-actions">
-        <button class="btn-action btn-save" style="background:rgba(255,255,255,.08);color:var(--text-light);box-shadow:none" onclick="forceCloseDeleteModal()">Cancelar</button>
+        <button class="btn-action btn-ghost" onclick="forceCloseDeleteModal()">Cancelar</button>
         <button id="del-confirm-btn" class="btn-action btn-delete" onclick="confirmDelete()">Borrar</button>
       </div>
     </div>
@@ -447,7 +545,7 @@ input[type=checkbox]{width:24px;height:24px;accent-color:var(--neon-cyan);flex-s
 </nav>
 
 <script>
-window.APP_VERSION='14-oct-2026 · f';
+window.APP_VERSION='17-oct-2026 · g';
 (function(){
   var n=0;
   function box(msg){
@@ -768,7 +866,7 @@ function applyAppearance(){
     set('--neon-cyan',eff);set('--neon-green',eff);set('--neon-purple',eff);
     set('--accent-rgb',rgb);set('--ok-rgb',rgb);set('--purple-rgb',rgb);
     set('--neon-cyan-glow',`rgba(${rgb},.45)`);set('--neon-green-glow',`rgba(${rgb},.45)`);
-    set('--glass-border',`rgba(${rgb},.24)`);set('--text-dim',mixHex(eff,'#9aa6b8',.28));
+    set('--glass-border',`rgba(${rgb},.24)`);set('--text-dim',mixHex(eff,'#a9b6c9',.22));
   }
   let work=null;
   if(HEX6.test(settings.workColor))work=brighten(settings.workColor);
