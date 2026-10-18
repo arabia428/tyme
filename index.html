@@ -272,6 +272,27 @@ box-shadow:inset 0 0 0 3px rgba(var(--st-rgb),.9),inset 0 0 22px 3px rgba(var(--
 .alert-banner{background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,0) 48%),linear-gradient(135deg,#ffa238,#ff5e00);border:1px solid rgba(255,255,255,.4);border-bottom-color:rgba(0,0,0,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -3px 5px rgba(0,0,0,.25),0 6px 14px rgba(0,0,0,.5),0 0 20px rgba(255,140,0,.55);animation:warnPulse 2s ease-in-out infinite alternate}
 @keyframes warnPulse{from{box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -3px 5px rgba(0,0,0,.25),0 6px 14px rgba(0,0,0,.5),0 0 10px rgba(255,140,0,.4)}to{box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -3px 5px rgba(0,0,0,.25),0 6px 14px rgba(0,0,0,.5),0 0 28px rgba(255,140,0,.9)}}
 .toast{background:var(--plate);border:1px solid rgba(var(--accent-rgb),.8);box-shadow:var(--bevel),0 8px 18px rgba(0,0,0,.6)}
+
+/* ===== ANTI-PARPADEO: sin blur de fondo, sin animar sombras, sin repintar por segundo ===== */
+:root{--plate:linear-gradient(180deg,rgba(255,255,255,.17) 0,rgba(255,255,255,.05) 30%,rgba(255,255,255,0) 48%,rgba(0,0,0,.24) 100%),linear-gradient(155deg,var(--st1) 0%,var(--st2) 32%,var(--st3) 64%,var(--st4) 100%)}
+.modal-overlay,.glass-modal,.bottom-nav,.menu-btn,.settings-drawer{-webkit-backdrop-filter:none;backdrop-filter:none}
+.modal-overlay{background:rgba(0,0,0,.74)}
+.settings-drawer{background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,0) 18%),linear-gradient(160deg,rgba(58,68,98,.96),rgba(20,26,46,.97) 55%,rgba(10,14,28,.98))}
+.bottom-nav{background:linear-gradient(180deg,rgba(104,116,142,.96) 0,rgba(40,48,72,.97) 32%,rgba(14,18,32,.98) 100%);transform:translate3d(-50%,0,0)}
+.menu-btn{background:linear-gradient(155deg,rgba(255,255,255,.45) 0%,rgba(170,180,200,.24) 38%,rgba(40,46,64,.62) 100%),rgba(22,27,44,.55);transform:translateZ(0)}
+.menu-btn:active{transform:translateZ(0) scale(.92)}
+#bg-layer{transform:translateZ(0)}
+.second-tick,.second-tick.tick-anim{animation:none;will-change:auto;filter:none}
+.timer-display,.timer-display span{font-variant-numeric:tabular-nums}
+.timer-display #t-hours,.timer-display #t-mins,.timer-display #t-secs{display:inline-block;min-width:1.35em;text-align:center}
+.alert-banner{animation:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -3px 5px rgba(0,0,0,.25),0 6px 14px rgba(0,0,0,.5),0 0 20px rgba(255,140,0,.6)}
+.big-3d-button,.big-3d-button.working{animation:none}
+.big-3d-button{transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
+.big-3d-button::after{content:"";position:absolute;z-index:-1;left:0;top:0;right:0;bottom:0;border-radius:50%;box-shadow:0 0 44px 8px rgba(var(--st-rgb),.75);opacity:0;pointer-events:none}
+.big-3d-button.working::after{animation:glowPulse 2.4s ease-in-out infinite alternate;will-change:opacity}
+@keyframes glowPulse{from{opacity:.12}to{opacity:1}}
+.colon-blink{will-change:opacity}
+@media (prefers-reduced-motion:reduce){.big-3d-button.working::after,.colon-blink{animation:none;opacity:.6}}
 </style></head>
 <body>
 <div id="bg-layer"><div id="bg-zoom"><img id="bg-img" alt="" draggable="false"></div><div id="bg-shade"></div></div>
@@ -545,7 +566,7 @@ box-shadow:inset 0 0 0 3px rgba(var(--st-rgb),.9),inset 0 0 22px 3px rgba(var(--
 </nav>
 
 <script>
-window.APP_VERSION='17-oct-2026 · g';
+window.APP_VERSION='18-oct-2026 · h';
 (function(){
   var n=0;
   function box(msg){
@@ -683,15 +704,12 @@ function updateLiveClock(force=false){
   const hrs=String(Math.floor(diff/3600000)).padStart(2,'0'),mins=String(Math.floor((diff%3600000)/60000)).padStart(2,'0'),secs=String(Math.floor((diff%60000)/1000)).padStart(2,'0');
   if(h.textContent!==hrs)h.textContent=hrs;
   if(m.textContent!==mins)m.textContent=mins;
-  if(s.textContent!==secs||force){
-    s.textContent=secs;s.classList.remove('tick-anim');
-    requestAnimationFrame(()=>requestAnimationFrame(()=>s.classList.add('tick-anim')));
-  }
+  if(s.textContent!==secs)s.textContent=secs;
   const mk=Math.floor(now/MIN);
   if(mk!==state.lastMinKey){
     const first=state.lastMinKey===null;state.lastMinKey=mk;
     if(!first){
-      if(state.isWorking){syncActiveLog();saveStorageData();renderCalendar()}
+      if(state.isWorking){syncActiveLog();saveStorageData();if(document.getElementById('page-1').classList.contains('active'))renderCalendar()}
       renderAlerts();
       if(document.getElementById('page-4').classList.contains('active'))renderStats();
       if(document.getElementById('page-2').classList.contains('active'))renderAnnualOverview();
