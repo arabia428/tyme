@@ -127,7 +127,7 @@ body{background-color:var(--bg-dark);background-image:radial-gradient(circle at 
 .verdict.ok{background:rgba(var(--ok-rgb),.12);border:1px solid var(--neon-green);color:var(--neon-green)}
 .verdict.bad{background:rgba(255,145,0,.12);border:1px solid var(--neon-orange);color:var(--neon-orange)}
 .nav-badge{background:var(--neon-orange);color:#000;border-radius:10px;font-size:calc(10px * var(--fs));padding:1px 6px;display:none}
-.del-preview{background:rgba(255,42,109,.1);border:1px solid var(--neon-red);border-radius:12px;padding:10px 12px;font-size:calc(12px * var(--fs));color:var(--neon-red);text-align:center;line-height:1.4}
+.history-card{background:var(--plate);border:1px solid rgba(var(--ok-rgb),.55);border-left:4px solid var(--neon-green);border-radius:12px;padding:11px;margin-bottom:9px;font-size:calc(12px * var(--fs));line-height:1.4}.history-meta{color:var(--text-dim);font-size:calc(10px * var(--fs));margin-top:5px}.del-preview{background:rgba(255,42,109,.1);border:1px solid var(--neon-red);border-radius:12px;padding:10px 12px;font-size:calc(12px * var(--fs));color:var(--neon-red);text-align:center;line-height:1.4}
 #bg-layer{position:fixed;top:0;left:0;width:100%;height:100vh;height:100lvh;z-index:-1;overflow:hidden;display:none;pointer-events:none}
 #bg-zoom{position:absolute;top:0;left:0;width:100%;height:100%}
 #bg-img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 50%;pointer-events:none}
@@ -604,7 +604,7 @@ const STORAGE_KEY='control_horario_neon_data_v3';
 const MIN=60000,H=60,DAY=86400000;
 const state={isWorking:false,startTime:null,lastActionTimestamp:new Date(),liveClockAnimation:null,lastMinKey:null,
   selectedMonth:new Date().getMonth(),selectedYear:new Date().getFullYear(),activeEditingKey:null,modalOrigEnd:null,
-  workedLogs:{},dismissedSig:'',monthOverrides:{},annualYear:new Date().getFullYear(),mm:null,delArmed:false};
+  workedLogs:{},dismissedSig:'',monthOverrides:{},alertLedger:{open:{},history:[]},annualYear:new Date().getFullYear(),mm:null,delArmed:false};
 const monthNames=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
 const pad=n=>String(n).padStart(2,'0');
@@ -631,7 +631,7 @@ function showStorageWarning(){
 }
 
 function saveStorageData(){
-  store.set(STORAGE_KEY,JSON.stringify({isWorking:state.isWorking,startTime:state.startTime?new Date(state.startTime).toISOString():null,lastActionTimestamp:state.lastActionTimestamp?new Date(state.lastActionTimestamp).toISOString():null,workedLogs:state.workedLogs,dismissedSig:state.dismissedSig,monthOverrides:state.monthOverrides}));
+  store.set(STORAGE_KEY,JSON.stringify({isWorking:state.isWorking,startTime:state.startTime?new Date(state.startTime).toISOString():null,lastActionTimestamp:state.lastActionTimestamp?new Date(state.lastActionTimestamp).toISOString():null,workedLogs:state.workedLogs,dismissedSig:state.dismissedSig,monthOverrides:state.monthOverrides,alertLedger:state.alertLedger||{open:{},history:[]}}));
 }
 function loadStorageData(){
   const raw=store.get(STORAGE_KEY);
@@ -644,6 +644,8 @@ function loadStorageData(){
     state.workedLogs=p.workedLogs||{};
     state.dismissedSig=p.dismissedSig||'';
     state.monthOverrides=p.monthOverrides||{};
+    state.alertLedger=p.alertLedger&&typeof p.alertLedger==='object'?p.alertLedger:{open:{},history:[]};
+    state.alertLedger.open=state.alertLedger.open||{};state.alertLedger.history=Array.isArray(state.alertLedger.history)?state.alertLedger.history:[];
   }catch(e){console.error("Error al cargar localStorage:",e)}
 }
 
@@ -1428,28 +1430,48 @@ function analyze(){
 }
 
 function renderAlerts(){
-  const A=analyze(),n=A.alerts.length,sig=A.alerts.map(a=>a.id).join('|');
+  const A=analyze(),active=A.alerts,n=active.length;
   const ban=document.getElementById('alert-banner'),badge=document.getElementById('nav-badge');
-  if(n&&sig!==state.dismissedSig){
-    ban.style.display='flex';
-    document.getElementById('ab-title').innerText=`${n} aviso${n>1?'s':''} de tiempos de conducción`;
-    document.getElementById('ab-sub').innerText=A.alerts[0].t;
-  }else ban.style.display='none';
-  badge.style.display=n?'inline':'none';badge.innerText=n;
-  state.currentSig=sig;
-  const ua=A.alerts.filter(a=>a.id.startsWith('ua-')).map(a=>a.id);
-  if(state.seenUa===undefined)state.seenUa=new Set(ua);
-  else{if(ua.some(i=>!state.seenUa.has(i)))buzz([200,100,200,100,400]);ua.forEach(i=>state.seenUa.add(i))}
+  const ledger=state.alertLedger||(state.alertLedger={open:{},history:[]});
+  ledger.open=ledger.open||{};ledger.history=Array.isArray(ledger.history)?ledger.history:[];
+  const current={};
+  active.forEach(a=>{
+    const old=ledger.open[a.id],nowIso=new Date().toISOString();
+    current[a.id]={id:a.id,type:a.type,lvl:a.lvl,title:a.t,detail:a.d,remaining:Math.max(0,a.rec||0),
+      initial:old?Math.max(old.initial||0,a.rec||0):Math.max(0,a.rec||0),
+      firstSeen:old?old.firstSeen:nowIso,lastSeen:nowIso};
+  });
+  Object.keys(ledger.open).forEach(id=>{
+    if(current[id])return;
+    const old=ledger.open[id],isDebt=id.startsWith('debt-');
+    const recovered=isDebt?Math.max(0,old.initial||0):0;
+    ledger.history.unshift({id,title:old.title||'Aviso resuelto',type:old.type||'other',
+      firstSeen:old.firstSeen||new Date().toISOString(),resolvedAt:new Date().toISOString(),
+      initial:old.initial||0,remaining:0,recovered,
+      status:isDebt?(recovered>0?'Recuperación confirmada por los registros: deuda saldada':'Deuda ya no detectada'):'Condición ya no detectada',
+      detail:old.detail||''});
+  });
+  ledger.open=current;ledger.history=ledger.history.slice(0,250);
+  const sig=active.map(a=>a.id).join('|');
+  if(n&&sig!==state.dismissedSig){ban.style.display='flex';document.getElementById('ab-title').innerText=`${n} aviso${n>1?'s':''} de tiempos de conducción`;document.getElementById('ab-sub').innerText=active[0].t}
+  else ban.style.display='none';
+  badge.style.display=n?'inline':'none';badge.innerText=n;state.currentSig=sig;
+  const ua=active.filter(a=>a.id.startsWith('ua-')).map(a=>a.id);
+  if(state.seenUa===undefined)state.seenUa=new Set(ua);else{if(ua.some(i=>!state.seenUa.has(i)))buzz([200,100,200,100,400]);ua.forEach(i=>state.seenUa.add(i))}
   let h=`<div class="sum-row"><div class="sum-box"><span>Horas pasadas</span><b style="color:${A.workExcess?'var(--neon-red)':'var(--neon-green)'}">${fm(A.workExcess)}</b></div><div class="sum-box"><span>Descanso a recuperar</span><b style="color:${A.restNeed?'var(--neon-orange)':'var(--neon-green)'}">${fm(A.restNeed)}</b></div></div><div style="height:12px"></div>`;
   if(A.info.restNow!==undefined&&!state.isWorking){
     const target=A.info.cnt>=6?45*H:11*H;
-    h+=`<div class="al-card ok-card"><h5>☕ Descanso actual</h5><p>Llevas ${fm(A.info.restNow)} descansando. Mínimo diario: 11 h (reducido 9 h)${A.info.cnt>=6?'. Al ser la 6ª jornada, debe ser semanal (24 h reducido / 45 h normal)':''}.</p>${A.info.restNow<target?`<span class="al-rec">Faltan ${fm(target-A.info.restNow)} para el descanso normal</span>`:''}</div><div style="height:12px"></div>`;
+    h+=`<div class="al-card ok-card"><h5>☕ Descanso actual</h5><p>Llevas ${fm(A.info.restNow)} descansando. Mínimo diario: 11 h (reducido 9 h)${A.info.cnt>=6?'. Al ser la 6ª jornada, debe ser semanal (24 h reducido / 45 h normal)':''}.</p>${A.info.restNow<target?`<span class="al-rec">Faltan ${fm(target-A.info.restNow)} para el descanso normal</span>`:'<span class="al-rec">Objetivo de descanso normal alcanzado</span>'}</div><div style="height:12px"></div>`;
   }
-  if(!n)h+=`<div class="al-card ok-card"><h5>✅ Todo en regla</h5><p>No hay excesos de trabajo ni descansos pendientes de recuperar.</p></div>`;
-  h+=A.alerts.map(a=>`<div class="al-card ${a.lvl}" style="margin-bottom:10px"><h5>${a.lvl==='danger'?'☢️':'⚠️'} ${a.t}</h5><p>${a.d}</p>${a.rec?`<span class="al-rec">Recuperar: ${fm(a.rec)}</span>`:''}</div>`).join('');
+  if(!n)h+=`<div class="al-card ok-card"><h5>✅ No hay avisos activos</h5><p>Los problemas que dejan de detectarse se trasladan al historial. Si una deuda de descanso sigue pendiente, su aviso permanece activo.</p></div>`;
+  h+=active.map(a=>`<div class="al-card ${a.lvl}" style="margin-bottom:10px"><h5>${a.lvl==='danger'?'☢️':'⚠️'} ${a.t}</h5><p>${a.d}</p>${a.rec?`<span class="al-rec">Pendiente: ${fm(a.rec)}</span>`:''}<div class="history-meta">Activo desde ${new Date(current[a.id].firstSeen).toLocaleString('es-ES')}</div></div>`).join('');
   h+=`<div class="rules"><b>Normativa aplicada</b> · Reglamento (CE) 561/2006, modificado por el Reglamento (UE) 2020/1054 (Paquete de Movilidad).<br>• Disponibilidad: máximo 15 h por jornada (jornada normal ~12 h; 13-15 h con descanso reducido).<br>• Descanso diario: 11 h (reducido 9 h, máx. 3 entre dos semanales).<br>• Descanso semanal: 45 h (reducido 24 h, compensable de una sola vez junto a otro descanso de al menos 9 h antes del final de la 3ª semana siguiente). Máx. 6 jornadas seguidas. El semanal normal no puede hacerse en cabina.<br><i>La app cuenta disponibilidad y descanso totales, no conducción ni pausas de 45 min. Es una ayuda: manda el tacógrafo.</i></div>`;
-  document.getElementById('alerts-page').innerHTML=h;
+  h+=`<section style="margin-top:8px"><h3 class="page-title" style="font-size:14px">📚 Historial de avisos resueltos</h3><p class="sp-hint" style="margin-bottom:10px">Registro automático de cuándo se detectó cada aviso y cuándo dejó de estar activo.</p>`;
+  if(!ledger.history.length)h+=`<div class="al-card"><p>Aún no hay avisos resueltos registrados.</p></div>`;
+  else h+=ledger.history.map(x=>`<div class="history-card"><h5>✓ ${escapeHtml(x.title)}</h5><p>${escapeHtml(x.status||'Resuelto')}</p>${x.type==='rest'&&x.initial?`<p>Horas inicialmente pendientes: <b>${fm(x.initial)}</b>. Horas recuperadas calculadas: <b>${fm(x.recovered||0)}</b>.</p>`:''}<div class="history-meta">Detectado: ${new Date(x.firstSeen).toLocaleString('es-ES')} · Resuelto: ${new Date(x.resolvedAt).toLocaleString('es-ES')}</div></div>`).join('');
+  h+='</section>';document.getElementById('alerts-page').innerHTML=h;saveStorageData();
 }
+function escapeHtml(value){return String(value==null?'':value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function dismissBanner(e){
   e.stopPropagation();
   state.dismissedSig=state.currentSig||'';
