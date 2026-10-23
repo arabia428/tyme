@@ -1427,8 +1427,12 @@ function analyze(){
     if(cnt===7&&recent(j.s))add('j6-'+j.s,'rest','danger','Más de 6 jornadas sin descanso semanal',`Llevas 7 jornadas desde el último descanso semanal (máx. 6). Toca descanso semanal de al menos 24 h (45 h normal).`,24*H);
     const n=J[i+1];
     if(!n){
+      // El descanso en curso también puede compensar una deuda anterior.
+      // Antes solo se evaluaban intervalos cerrados entre dos jornadas.
+      const ongoingGap=Math.max(0,(now-j.e)/MIN);
+      if(!j.active)payEnBloc(j.e,ongoingGap);
       if(cnt===6&&!j.active&&now-j.e<24*H*MIN)add('j6w-'+j.s,'rest','warn','Sexta jornada seguida','Tu próximo descanso debe ser semanal: mínimo 24 h (reducido) o 45 h (normal).',0);
-      if(!j.active)info.restNow=(now-j.e)/MIN;
+      if(!j.active)info.restNow=ongoingGap;
       info.cnt=cnt;return;
     }
     const g=(n.s-j.e)/MIN;
