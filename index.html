@@ -1383,8 +1383,8 @@ function getIntervals(){
   return out.sort((a,b)=>a.s-b.s);
 }
 function analyze(){
-  const now=Date.now(),iv=getIntervals(),alerts=[],info={};
-  if(!iv.length)return {alerts,workExcess:0,restNeed:0,info};
+  const now=Date.now(),iv=getIntervals(),alerts=[],info={},resolvedDebts=[];
+  if(!iv.length)return {alerts,workExcess:0,restNeed:0,info,resolvedDebts};
   const recent=s=>s>now-35*DAY;
   const add=(id,type,lvl,t,d,rec)=>alerts.push({id,type,lvl,t,d,rec:Math.round(rec||0)});
   const J=[];
@@ -1402,7 +1402,26 @@ function analyze(){
     }
   });
   let cnt=0,red=0;const debts=[];
-  const pay=x=>{for(const d of debts){if(x<=0)break;const t=Math.min(d.left,x);d.left-=t;x-=t}};
+  // Compensación semanal: se toma íntegra y de forma continua, unida a otro descanso.
+  // La compensación debe tomarse íntegra en un único bloque y quedar unida
+  // a un descanso continuo de al menos 9 h (art. 8.7). No se suman fracciones.
+  // El bloque se evalúa además por su duración total para detectar si constituye
+  // un descanso semanal reducido y genera una nueva deuda independiente.
+  const payEnBloc=(gapStart,gapMinutes)=>{
+    let compensation=0;
+    for(const d of debts){
+      if(d.left<=0)continue;
+      const need=d.left;
+      // El bloque completo debe dejar, además de la compensación, al menos 9 h
+      // de descanso continuo al que queda unida. No se acumulan fracciones.
+      if(gapMinutes-(compensation+need)+0.001>=9*H){
+        compensation+=need;
+        d.left=0;d.paidAt=gapStart;d.paidBlock=gapMinutes;
+        resolvedDebts.push({id:'debt-'+d.from,from:d.from,paidAt:gapStart,amount:d.original,late:gapStart>d.due,blockMinutes:gapMinutes});
+      }
+    }
+    return compensation;
+  };
   J.forEach((j,i)=>{
     cnt++;
     if(cnt===7&&recent(j.s))add('j6-'+j.s,'rest','danger','Más de 6 jornadas sin descanso semanal',`Llevas 7 jornadas desde el último descanso semanal (máx. 6). Toca descanso semanal de al menos 24 h (45 h normal).`,24*H);
@@ -1413,20 +1432,29 @@ function analyze(){
       info.cnt=cnt;return;
     }
     const g=(n.s-j.e)/MIN;
+    payEnBloc(j.e,g);
+    // La duración total del intervalo determina si hubo descanso semanal; si fue
+    // reducido, se crea su propia deuda aunque en el mismo bloque se haya pagado otra.
     if(g>=24*H){
-      if(g<45*H)debts.push({from:j.e,due:weekStart(j.e)+28*DAY,left:45*H-g});else pay(g-45*H);
+      if(g<45*H){
+        const ws=weekStart(j.e);
+        debts.push({from:j.e,due:ws+28*DAY-1,left:45*H-g,original:45*H-g});
+      }
       cnt=0;red=0;
-    }else if(g>=11*H)pay(g-11*H);
-    else{red++;if(red>3&&recent(j.e))add('rd-'+j.e,'rest','danger','Más de 3 descansos diarios reducidos',`El descanso del ${fd(j.e)} fue de ${fm(g)} (reducido). Solo se permiten 3 entre dos descansos semanales.`,11*H-g)}
+    }else if(g>=11*H){red=0;}
+    else if(g>=9*H){
+      red++;
+      if(red>3&&recent(j.e))add('rd-'+j.e,'rest','danger','Más de 3 descansos diarios reducidos',`El descanso del ${fd(j.e)} fue de ${fm(g)} (reducido). Solo se permiten 3 entre dos descansos semanales.`,11*H-g);
+    }
   });
   debts.forEach(d=>{if(d.left>0){
     const over=now>d.due;
-    add('debt-'+d.from,'rest',over?'danger':'warn',`Descanso por recuperar: ${fm(d.left)}`,`Descanso semanal reducido del ${fd(d.from)}. Compénsalo de una sola vez junto a otro descanso de al menos 9 h ${over?'(plazo vencido el':'antes del'} ${fd(d.due)}${over?')':''}.`,d.left);
+    add('debt-'+d.from,'rest',over?'danger':'warn',`Descanso por recuperar: ${fm(d.left)}`,`Descanso semanal reducido del ${fd(d.from)}. Debes recuperar las ${fm(d.left)} h pendientes de una sola vez, unidas a un descanso continuo de al menos 9 h. La compensación debe caber íntegra en este único bloque, antes del ${fd(d.due)}. No se suman horas sueltas de distintos días.`,d.left);
   }});
   alerts.sort((a,b)=>(a.lvl==='danger'?0:1)-(b.lvl==='danger'?0:1));
   const workExcess=alerts.filter(a=>a.type==='work').reduce((s,a)=>s+a.rec,0);
   const restNeed=alerts.filter(a=>a.type==='rest').reduce((s,a)=>s+a.rec,0);
-  return {alerts,workExcess,restNeed,info};
+  return {alerts,workExcess,restNeed,info,resolvedDebts};
 }
 
 function renderAlerts(){
@@ -1441,15 +1469,16 @@ function renderAlerts(){
       initial:old?Math.max(old.initial||0,a.rec||0):Math.max(0,a.rec||0),
       firstSeen:old?old.firstSeen:nowIso,lastSeen:nowIso};
   });
+  const paidMap=new Map((A.resolvedDebts||[]).map(d=>[d.id,d]));
   Object.keys(ledger.open).forEach(id=>{
     if(current[id])return;
-    const old=ledger.open[id],isDebt=id.startsWith('debt-');
-    const recovered=isDebt?Math.max(0,old.initial||0):0;
+    const old=ledger.open[id],isDebt=id.startsWith('debt-'),paid=paidMap.get(id);
+    const recovered=paid?Math.max(0,paid.amount||old.initial||0):0;
     ledger.history.unshift({id,title:old.title||'Aviso resuelto',type:old.type||'other',
       firstSeen:old.firstSeen||new Date().toISOString(),resolvedAt:new Date().toISOString(),
       initial:old.initial||0,remaining:0,recovered,
-      status:isDebt?(recovered>0?'Recuperación confirmada por los registros: deuda saldada':'Deuda ya no detectada'):'Condición ya no detectada',
-      detail:old.detail||''});
+      status:isDebt?(paid?(paid.late?'Compensación íntegra detectada, pero fuera de plazo':'Compensación íntegra detectada en un único bloque continuo'):'Aviso ya no detectado; revisar los registros antes de darlo por recuperado'):'Condición ya no detectada',
+      detail:old.detail||'',paidAt:paid?new Date(paid.paidAt).toISOString():null});
   });
   ledger.open=current;ledger.history=ledger.history.slice(0,250);
   const sig=active.map(a=>a.id).join('|');
@@ -1465,7 +1494,7 @@ function renderAlerts(){
   }
   if(!n)h+=`<div class="al-card ok-card"><h5>✅ No hay avisos activos</h5><p>Los problemas que dejan de detectarse se trasladan al historial. Si una deuda de descanso sigue pendiente, su aviso permanece activo.</p></div>`;
   h+=active.map(a=>`<div class="al-card ${a.lvl}" style="margin-bottom:10px"><h5>${a.lvl==='danger'?'☢️':'⚠️'} ${a.t}</h5><p>${a.d}</p>${a.rec?`<span class="al-rec">Pendiente: ${fm(a.rec)}</span>`:''}<div class="history-meta">Activo desde ${new Date(current[a.id].firstSeen).toLocaleString('es-ES')}</div></div>`).join('');
-  h+=`<div class="rules"><b>Normativa aplicada</b> · Reglamento (CE) 561/2006, modificado por el Reglamento (UE) 2020/1054 (Paquete de Movilidad).<br>• Disponibilidad: máximo 15 h por jornada (jornada normal ~12 h; 13-15 h con descanso reducido).<br>• Descanso diario: 11 h (reducido 9 h, máx. 3 entre dos semanales).<br>• Descanso semanal: 45 h (reducido 24 h, compensable de una sola vez junto a otro descanso de al menos 9 h antes del final de la 3ª semana siguiente). Máx. 6 jornadas seguidas. El semanal normal no puede hacerse en cabina.<br><i>La app cuenta disponibilidad y descanso totales, no conducción ni pausas de 45 min. Es una ayuda: manda el tacógrafo.</i></div>`;
+  h+=`<div class="rules"><b>Normativa aplicada</b> · Reglamento (CE) 561/2006, modificado por el Reglamento (UE) 2020/1054 (Paquete de Movilidad).<br>• Disponibilidad: máximo 15 h por jornada (jornada normal ~12 h; 13-15 h con descanso reducido).<br>• Descanso diario: 11 h (reducido 9 h, máx. 3 entre dos semanales).<br>• Descanso semanal: 45 h (reducido mínimo 24 h). La reducción se compensa íntegra y en un único bloque continuo, unida a otro descanso de al menos 9 h. La app confirma la compensación cuando queda íntegra dentro de un único bloque continuo unido a al menos 9 h de descanso. El intervalo completo se evalúa además para detectar si constituye un descanso semanal reducido. En dos descansos semanales reducidos consecutivos acogidos a la excepción de transporte internacional, la norma exige que ambas compensaciones precedan al siguiente descanso semanal regular; esta app no registra país ni tipo de transporte, por lo que ese supuesto debe verificarse aparte. Debe hacerse antes de finalizar la tercera semana siguiente; no se suman horas sueltas de varios días. Máx. 6 periodos de 24 h desde el fin del descanso semanal anterior. El semanal normal no puede hacerse en cabina.<br><i>La app cuenta disponibilidad y descanso totales, no conducción ni pausas de 45 min. Es una ayuda: manda el tacógrafo.</i></div>`;
   h+=`<section style="margin-top:8px"><h3 class="page-title" style="font-size:14px">📚 Historial de avisos resueltos</h3><p class="sp-hint" style="margin-bottom:10px">Registro automático de cuándo se detectó cada aviso y cuándo dejó de estar activo.</p>`;
   if(!ledger.history.length)h+=`<div class="al-card"><p>Aún no hay avisos resueltos registrados.</p></div>`;
   else h+=ledger.history.map(x=>`<div class="history-card"><h5>✓ ${escapeHtml(x.title)}</h5><p>${escapeHtml(x.status||'Resuelto')}</p>${x.type==='rest'&&x.initial?`<p>Horas inicialmente pendientes: <b>${fm(x.initial)}</b>. Horas recuperadas calculadas: <b>${fm(x.recovered||0)}</b>.</p>`:''}<div class="history-meta">Detectado: ${new Date(x.firstSeen).toLocaleString('es-ES')} · Resuelto: ${new Date(x.resolvedAt).toLocaleString('es-ES')}</div></div>`).join('');
