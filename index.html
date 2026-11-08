@@ -1646,20 +1646,33 @@ function periodStats(kind){
   let t=T0,guard=0;
   while(t<T1&&guard++<2000){
     const [ps,pe]=periodBounds(kind,t);
+    const a=Math.max(ps,T0),b=Math.min(pe,T1);
     const wm=overlapMin(iv,ps,pe);
-    const span=(pe-ps)/MIN,rm=Math.max(0,span-wm);
-    list.push({ps,pe,wm,rm,targetW:settings.targetWork*(span/1440)});
+    const span=Math.max(0,(b-a)/MIN),rm=Math.max(0,span-wm);
+    const n=iv.filter(x=>x.s>=ps&&x.s<pe).length;
+    list.push({ps,pe,wm,rm,span,n});
     t=pe;
   }
   return list;
 }
+function avgBlock(wm,span,n){
+  const d=Math.max(1,span/1440),aw=wm/d,ar=Math.max(0,span-wm)/d,per=n?wm/n:0;
+  const ok=aw/H<=settings.targetWork;
+  return `<div class="stat-line"><span>Media diaria · trabajo: <strong>${fm(aw)}</strong></span><span>descanso: <strong>${fm(ar)}</strong></span></div>`+
+    `<div class="stat-line"><span class="sub">Por jornada: <strong>${fm(per)}</strong></span><span class="sub">Jornadas: <strong>${n}</strong></span></div>`+
+    `<div class="verdict ${ok?'ok':'bad'}">Objetivo: ${f1(settings.targetWork)} h trabajo + ${f1(24-settings.targetWork)} h descanso al día</div>`;
+}
 function renderStats(){
   const p=document.getElementById('stats-page');if(!p)return;
-  const pw=periodStats('week'),pm=periodStats('month');
+  const pw=periodStats('week'),pm=periodStats('month'),iv=getIntervals();
   if(!pw||!pw.length){p.innerHTML='<div class="al-card ok-card"><h5>Sin datos suficientes</h5><p>Empieza a registrar jornadas para ver las medias.</p></div>';return}
   const lw=pw[pw.length-1],lm=pm&&pm.length?pm[pm.length-1]:null;
-  let h=`<div class="stat-card"><h5>📅 Esta semana</h5><div class="stat-line"><span>Trabajo: <strong>${fm(lw.wm)}</strong></span><span>Descanso: <strong>${fm(lw.rm)}</strong></span></div><div class="verdict ${lw.wm/H>=settings.targetWork*5?'ok':'bad'}">Objetivo semanal aprox: ${f1(settings.targetWork*5)} h</div></div>`;
-  if(lm)h+=`<div class="stat-card"><h5>🗓️ Este mes</h5><div class="stat-line"><span>Trabajo: <strong>${fm(lm.wm)}</strong></span><span>Descanso: <strong>${fm(lm.rm)}</strong></span></div></div>`;
+  const T0=iv[0].s,T1=Math.max(Date.now(),iv[iv.length-1].e),spanAll=(T1-T0)/MIN,wAll=overlapMin(iv,T0,T1);
+  const card=(title,wm,rm,span,n)=>`<div class="stat-card"><h5>${title}</h5><div class="stat-line"><span>Trabajo total: <strong>${fm(wm)}</strong></span><span>Descanso total: <strong>${fm(rm)}</strong></span></div>${avgBlock(wm,span,n)}</div>`;
+  let h=card('📅 Esta semana',lw.wm,lw.rm,lw.span,lw.n);
+  if(lm)h+=card('🗓️ Este mes',lm.wm,lm.rm,lm.span,lm.n);
+  h+=card('📊 Todo el registro',wAll,Math.max(0,spanAll-wAll),spanAll,iv.length);
+  h+=`<div class="rules">La media diaria se calcula sobre los días ya transcurridos (mínimo 1), sin contar el tiempo que aún no ha pasado.</div>`;
   p.innerHTML=h;
 }
 function switchPage(n){
