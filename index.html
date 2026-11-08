@@ -1494,10 +1494,11 @@ function renderLimits(A){
     const s=i.jStart;
     if(left9>0)h+=row('15 h',s+15*H*MIN,false);
     h+=row('13 h',s+13*H*MIN,left9===0);
+    h+=row('45 h',Date.now()+45*H*MIN,false,true);
   }else{
     const e=i.jEnd;
-    if(cnt>=6){h+=row('45 h',e+45*H*MIN,false,true)+row('24 h',e+24*H*MIN,true,true)}
-    else{h+=row('11 h',e+11*H*MIN,false);if(left9>0)h+=row('9 h',e+9*H*MIN,false)}
+    if(cnt<6){h+=row('11 h',e+11*H*MIN,false);if(left9>0)h+=row('9 h',e+9*H*MIN,false)}
+    h+=row('45 h',e+45*H*MIN,false,true);
   }
   box.innerHTML=h;
 }
