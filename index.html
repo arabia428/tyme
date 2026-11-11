@@ -335,7 +335,7 @@ body[data-pg]:not([data-pg="1"]) .rest-ruler{display:none}
     <div id="since-label" class="since-label">Desde --:--</div>
     <div id="limits-box" class="limits-box"></div>
     <div class="hero-btn-row">
-      <button class="btn-manual-edit" onclick="openManualStartModal()">✏️ Ajustar Inicio Manual</button>
+      <button class="btn-manual-edit" onclick="openManualStartModal()" aria-label="Ajustar inicio manual" style="padding:8px 16px;font-size:calc(16px * var(--fs))">✏️</button>
     </div>
   </div>
   <div class="calendar-card">
@@ -578,7 +578,7 @@ body[data-pg]:not([data-pg="1"]) .rest-ruler{display:none}
 </nav>
 
 <script>
-window.APP_VERSION='08-nov-2026 · i';
+window.APP_VERSION='11-nov-2026 · l';
 (function(){
   var n=0;
   function box(msg){
@@ -1681,6 +1681,164 @@ function switchPage(n){
   document.querySelectorAll('.nav-item').forEach((b,i)=>b.classList.toggle('active',i+1===n));
   if(n===3)renderAlerts();if(n===4)renderStats();if(n===2)renderAnnualOverview();
 }
+</script>
+<script>
+(function(){
+/* ===== Estilos ===== */
+const css=`
+.limits-box{display:grid;grid-template-columns:auto 2px auto;justify-content:center;align-items:center;column-gap:16px;row-gap:8px;line-height:1.2;font-size:calc(14px * var(--fs))}
+.limits-box:empty{display:none}
+.lb-a{text-align:right;min-width:2.8em}.lb-t{text-align:left}
+.lb-sep{width:2px;height:1.4em;border-radius:2px;background:var(--neon-cyan);opacity:.55}
+.dn-box{background:rgba(var(--accent-rgb),.1);border:1px solid var(--neon-cyan);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.dn-row{display:flex;justify-content:space-between;align-items:center;font-size:calc(12px * var(--fs))}
+.dn-text{width:100%;text-align:left;font-weight:normal;color:var(--text-light);resize:vertical;font-size:calc(13px * var(--fs))}
+.dn-item{background:rgba(0,0,0,.28);border-radius:8px;padding:6px 8px;font-size:calc(12px * var(--fs));display:flex;gap:8px;justify-content:space-between;align-items:flex-start;line-height:1.35}
+.dn-item small{display:block;color:var(--text-dim);font-size:calc(10px * var(--fs))}
+.dn-item button{background:none;border:none;color:var(--neon-red);font-size:16px;cursor:pointer}
+.km-grid{display:grid;grid-template-columns:1fr auto auto;gap:7px 14px;align-items:center;font-size:calc(13px * var(--fs))}
+.km-grid .h{font-size:calc(10px * var(--fs));color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px}
+.km-grid .v{text-align:right;font-weight:800;color:var(--neon-green);font-variant-numeric:tabular-nums}
+.km-grid .d{text-align:right;color:var(--text-dim);font-variant-numeric:tabular-nums}`;
+const sty=document.createElement('style');sty.textContent=css;document.head.appendChild(sty);
+
+/* ===== Datos: notas y km por día (misma clave que las jornadas) ===== */
+state.dayNotes={};
+try{const raw=store.get(STORAGE_KEY);if(raw){const p=JSON.parse(raw);if(p&&p.dayNotes&&typeof p.dayNotes==='object')state.dayNotes=p.dayNotes}}catch(e){}
+const _sv=saveStorageData;
+saveStorageData=function(){
+  _sv();
+  try{const raw=store.get(STORAGE_KEY),o=raw?JSON.parse(raw):{};o.dayNotes=state.dayNotes;store.set(STORAGE_KEY,JSON.stringify(o))}catch(e){}
+};
+const num=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)&&x>=0?x:null};
+const dayKm=r=>r&&r.kmStart!=null&&r.kmEnd!=null&&r.kmEnd>=r.kmStart?r.kmEnd-r.kmStart:null;
+const nk=n=>n.toLocaleString('es-ES',{maximumFractionDigits:1})+' km';
+const dnGet=k=>state.dayNotes[k]||(state.dayNotes[k]={kmStart:null,kmEnd:null,notes:[]});
+const dnClean=k=>{const r=state.dayNotes[k];if(r&&r.kmStart==null&&r.kmEnd==null&&!(r.notes&&r.notes.length))delete state.dayNotes[k]};
+
+/* ===== Notas y km dentro del modal del día ===== */
+const mb=document.querySelector('#modal-overlay .modal-body');
+const box=document.createElement('div');box.className='dn-box';
+box.innerHTML=
+ '<div class="dn-row"><b>🚛 Kilómetros</b><span id="dn-trip" style="font-weight:bold;color:var(--neon-green)">—</span></div>'+
+ '<div class="dn-row"><label for="dn-km-start">Km inicio jornada</label><input id="dn-km-start" type="number" inputmode="decimal" min="0" step="1" class="form-input" style="width:110px" oninput="dnKm()"></div>'+
+ '<div class="dn-row"><label for="dn-km-end">Km final jornada</label><input id="dn-km-end" type="number" inputmode="decimal" min="0" step="1" class="form-input" style="width:110px" oninput="dnKm()"></div>'+
+ '<div class="dn-row"><b>📝 Notas del día</b></div>'+
+ '<textarea id="dn-text" class="form-input dn-text" rows="3" placeholder="¿Qué se ha hecho hoy?"></textarea>'+
+ '<button class="btn-action btn-save btn-cyan" style="flex:none" onclick="dnAdd()">+ Añadir nota</button>'+
+ '<div id="dn-list" style="display:flex;flex-direction:column;gap:6px"></div>';
+mb.insertBefore(box,mb.querySelector('.modal-actions'));
+window.renderDayNotes=function(k){
+  const r=state.dayNotes[k]||{kmStart:null,kmEnd:null,notes:[]};
+  byId('dn-km-start').value=r.kmStart==null?'':r.kmStart;
+  byId('dn-km-end').value=r.kmEnd==null?'':r.kmEnd;
+  byId('dn-text').value='';
+  const km=dayKm(r);byId('dn-trip').textContent=km==null?'—':nk(km);
+  byId('dn-list').innerHTML=(r.notes||[]).map((n,i)=>({n,i})).reverse().map(({n,i})=>{
+    const d=new Date(n.ts);
+    return `<div class="dn-item"><div><small>${pad(d.getDate())}/${pad(d.getMonth()+1)} ${hm(d)}</small>${escapeHtml(n.text).replace(/\n/g,'<br>')}</div><button onclick="dnDel(${i})">✕</button></div>`;
+  }).join('');
+};
+window.dnKm=function(){
+  const k=state.activeEditingKey;if(!k)return;
+  const r=dnGet(k);r.kmStart=num(byId('dn-km-start').value);r.kmEnd=num(byId('dn-km-end').value);
+  const km=dayKm(r);byId('dn-trip').textContent=km==null?'—':nk(km);
+  dnClean(k);saveStorageData();renderKmStats();
+};
+window.dnAdd=function(){
+  const k=state.activeEditingKey,t=byId('dn-text').value.trim();if(!k||!t)return;
+  dnGet(k).notes.push({ts:Date.now(),text:t});saveStorageData();renderDayNotes(k);
+};
+window.dnDel=function(i){
+  const k=state.activeEditingKey;if(!k||!state.dayNotes[k])return;
+  state.dayNotes[k].notes.splice(i,1);dnClean(k);saveStorageData();renderDayNotes(k);
+};
+const _om=openModal;
+openModal=function(key,day,arr){_om(key,day,arr);renderDayNotes(key)};
+
+/* ===== Estadística de km bajo el calendario ===== */
+const card=document.createElement('div');card.id='km-stats';card.className='stat-card';
+document.querySelector('#page-1 .calendar-card').insertAdjacentElement('afterend',card);
+window.renderKmStats=function(){
+  const now=new Date(),y=now.getFullYear(),m=now.getMonth(),d=now.getDate(),today=new Date(y,m,d).getTime();
+  const rows=[];let inc=0;
+  Object.entries(state.dayNotes).forEach(([k,r])=>{
+    const [yy,mm,dd]=k.split('-').map(Number),t=new Date(yy,mm,dd).getTime(),km=dayKm(r);
+    if(km==null){if(r.kmStart!=null&&r.kmEnd==null)inc++;return}
+    if(t<=today)rows.push({t,km});
+  });
+  const P=[['Hoy',today],['Semana (7 días)',new Date(y,m,d-6).getTime()],['2 semanas',new Date(y,m,d-13).getTime()],['Mes',new Date(y,m-1,d+1).getTime()],['3 meses',new Date(y,m-3,d+1).getTime()],['6 meses',new Date(y,m-6,d+1).getTime()],['Año',new Date(y-1,m,d+1).getTime()],['Total registro',-Infinity]];
+  let h='<h5>🚛 Kilómetros recorridos</h5><div class="km-grid"><span class="h">Periodo</span><span class="h" style="text-align:right">Km</span><span class="h" style="text-align:right">Días</span>';
+  P.forEach(([n,from])=>{const s=rows.filter(r=>r.t>=from);h+=`<span>${n}</span><span class="v">${nk(s.reduce((a,r)=>a+r.km,0))}</span><span class="d">${s.length}</span>`});
+  h+='</div><div class="sub">Cada día cuenta km final − km inicio. Solo suman los días con ambos datos'+(inc?` (${inc} día${inc>1?'s':''} con km inicio pero sin final)`:'')+'.</div>';
+  card.innerHTML=h;
+};
+const _ac=afterChange;
+afterChange=function(){_ac();try{renderKmStats()}catch(e){window.tymeReport&&window.tymeReport(e)}};
+
+/* ===== Límites ordenados 9 → 11 → 45, columnas alineadas ===== */
+renderLimits=function(A){
+  const bx=byId('limits-box'),rr=byId('rest-ruler');if(!bx||!rr)return;
+  const i=(A&&A.info)||{};
+  if(i.jStart===undefined){bx.innerHTML='';rr.style.display='none';return}
+  rr.style.display='';
+  let n11=i.n11||0,n9=i.n9||0,cnt=i.cnt||0;
+  if(!state.isWorking&&i.restNow>=24*H){n11=0;n9=0;cnt=0}
+  const left9=Math.max(0,3-n9);
+  rr.innerHTML=`<b>DESCANSOS</b><br>11h ✓${n11}<br><span class="${left9?'':'rr-lo'}">9h ✓${n9}/3</span><br>${left9?`quedan ${left9}`:'<span class="rr-lo">sin 9h</span>'}<br>Jorn. ${cnt}/6`;
+  const row=(a,ms,w,day)=>`<span class="lim-row lb-a${w?' w':''}">${a}</span><span class="lb-sep"></span><span class="lim-row lb-t${w?' w':''}">${endTxt(ms,day)}</span>`;
+  let h='';
+  if(state.isWorking){
+    const s=i.jStart;
+    h+=row('13 h',s+13*H*MIN,left9===0);
+    if(left9>0)h+=row('15 h',s+15*H*MIN,false);
+  }else{
+    const e=i.jEnd;
+    if(cnt<6){if(left9>0)h+=row('9 h',e+9*H*MIN,false);h+=row('11 h',e+11*H*MIN,false)}
+    h+=row('45 h',e+45*H*MIN,false,true);
+  }
+  bx.innerHTML=h;
+};
+
+/* ===== Borrar datos: "todo" borra TODO; semana/mes también borran notas y km ===== */
+const _cd=confirmDelete;
+confirmDelete=function(){
+  const armed=state.delArmed,r=delRange();
+  if(armed&&r&&r.sc==='all'){state.dayNotes={};state.alertLedger={open:{},history:[]};state.seenUa=undefined}
+  _cd();
+  if(!armed||!r||r.sc==='all')return;
+  Object.keys(state.dayNotes).forEach(k=>{
+    const [y,m,d]=k.split('-').map(Number),t=new Date(y,m,d).getTime();
+    if(t>=r.a&&t<r.b)delete state.dayNotes[k];
+  });
+  saveStorageData();renderKmStats();
+};
+const _dp=updateDeletePreview;
+updateDeletePreview=function(){
+  _dp();
+  const r=delRange();if(!r)return;
+  const n=Object.keys(state.dayNotes).filter(k=>{const [y,m,d]=k.split('-').map(Number),t=new Date(y,m,d).getTime();return t>=r.a&&t<r.b}).length;
+  const extra=r.sc==='all'?'<br>+ notas, km, historial de avisos y reloj':(n?`<br>+ notas y km de ${n} día${n>1?'s':''}`:'');
+  if(extra)byId('del-preview').innerHTML+=extra;
+};
+const dm=document.querySelector('#sp-datos .settings-section:last-child .st-msg');
+if(dm)dm.textContent='«Todo» borra jornadas, meses editados, notas, km e historial de avisos. Tus ajustes y tu fondo se conservan (usa «Restaurar valores» para eso).';
+
+/* ===== Restaurar valores predeterminados ===== */
+const sec=document.createElement('div');sec.className='settings-section';
+sec.innerHTML='<h5>♻️ Valores predeterminados</h5><button id="st-reset-all" class="btn-action btn-delete">Restaurar valores predeterminados</button><div class="st-msg">Devuelve ajustes, apariencia, horario nocturno, avisos y fondo a como vienen de fábrica. No borra tus jornadas, notas ni km.</div>';
+byId('sp-datos').appendChild(sec);
+let armed=false;const rb=byId('st-reset-all');
+rb.onclick=function(){
+  if(!armed){armed=true;rb.classList.add('armed');rb.textContent='¿Seguro? Pulsa otra vez';setTimeout(()=>{armed=false;rb.classList.remove('armed');rb.textContent='Restaurar valores predeterminados'},5000);return}
+  armed=false;rb.classList.remove('armed');rb.textContent='Restaurar valores predeterminados';
+  Object.assign(settings,JSON.parse(JSON.stringify(DEFAULT_SETTINGS)));saveSettings();applyAppearance();
+  Object.assign(bg,{img:null,dim:.35,iw:0,ih:0,zoom:1,px:.5,py:.5});saveBackground();applyBackground();
+  recalcNightAll();afterChange();renderWeekdays();toast('Valores predeterminados restaurados');
+};
+renderKmStats();
+})();
+
 </script>
 </body>
 </html>
