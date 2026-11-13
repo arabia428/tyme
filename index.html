@@ -303,6 +303,11 @@ box-shadow:inset 0 0 0 3px rgba(var(--st-rgb),.9),inset 0 0 22px 3px rgba(var(--
 .rest-ruler b{color:var(--neon-cyan)}
 .rest-ruler .rr-lo{color:var(--neon-orange)}
 body[data-pg]:not([data-pg="1"]) .rest-ruler{display:none}
+
+/* ===== Anti-parpadeo móvil: ventanas sin animación de escala/opacidad y capa propia ===== */
+.modal-overlay{transition:none!important;will-change:opacity;transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden}
+.glass-modal,.modal-overlay.active .glass-modal{transition:none!important;transform:translateZ(0)!important;box-shadow:var(--bevel),0 10px 24px rgba(0,0,0,.7)!important;-webkit-backface-visibility:hidden;backface-visibility:hidden}
+.page{animation:none!important}
 </style></head>
 <body>
 <div id="bg-layer"><div id="bg-zoom"><img id="bg-img" alt="" draggable="false"></div><div id="bg-shade"></div></div>
@@ -578,7 +583,7 @@ body[data-pg]:not([data-pg="1"]) .rest-ruler{display:none}
 </nav>
 
 <script>
-window.APP_VERSION='11-nov-2026 · l';
+window.APP_VERSION='11-nov-2026 · n';
 (function(){
   var n=0;
   function box(msg){
@@ -1448,7 +1453,8 @@ function analyze(){
       info.cnt=cnt;info.n11=n11;info.n9=n9;info.jStart=j.s;info.jEnd=j.e;info.jActive=j.active;return;
     }
     const g=(n.s-j.e)/MIN;
-    if(g>=24*H){n11=0;n9=0}else if(g>=11*H)n11++;else if(g>=9*H)n9++;
+    const larga=Math.floor((j.e-j.s)/MIN)>13*H,cuenta9=g>=9*H&&g<24*H&&(g<11*H||larga);
+    if(g>=24*H){n11=0;n9=0}else if(cuenta9)n9++;else if(g>=11*H)n11++;
     payEnBloc(j.e,g);
     // La duración total del intervalo determina si hubo descanso semanal; si fue
     // reducido, se crea su propia deuda aunque en el mismo bloque se haya pagado otra.
@@ -1458,10 +1464,10 @@ function analyze(){
         debts.push({from:j.e,due:ws+28*DAY-1,left:45*H-g,original:45*H-g});
       }
       cnt=0;red=0;
-    }else if(g>=11*H){red=0;}
-    else if(g>=9*H){
+    }else if(!cuenta9&&g>=11*H){red=0;}
+    else if(cuenta9){
       red++;
-      if(red>3&&recent(j.e))add('rd-'+j.e,'rest','danger','Más de 3 descansos diarios reducidos',`El descanso del ${fd(j.e)} fue de ${fm(g)} (reducido). Solo se permiten 3 entre dos descansos semanales.`,11*H-g);
+      if(red>3&&recent(j.e))add('rd-'+j.e,'rest','danger','Más de 3 descansos diarios reducidos',`El descanso del ${fd(j.e)} fue de ${fm(g)}${larga&&g>=11*H?' y cuenta como reducido (9 h) porque la jornada superó las 13 h':' (reducido)'}. Solo se permiten 3 entre dos descansos semanales.`,Math.max(0,11*H-g));
     }
   });
   debts.forEach(d=>{if(d.left>0){
