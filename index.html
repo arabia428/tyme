@@ -1677,7 +1677,11 @@ function renderStats(){
   const lw=pw[pw.length-1],lm=pm&&pm.length?pm[pm.length-1]:null;
   const T0=iv[0].s,T1=Math.max(Date.now(),iv[iv.length-1].e),spanAll=(T1-T0)/MIN,wAll=overlapMin(iv,T0,T1);
   const card=(title,wm,rm,span,n)=>`<div class="stat-card"><h5>${title}</h5><div class="stat-line"><span>Trabajo total: <strong>${fm(wm)}</strong></span><span>Descanso total: <strong>${fm(rm)}</strong></span></div>${avgBlock(wm,span,n)}</div>`;
-  let h=card('📅 Esta semana',lw.wm,lw.rm,lw.span,lw.n);
+  const dm=(wm,span)=>{const d=Math.max(1,span/1440);return [wm/d,Math.max(0,span-wm)/d]};
+  const rowD=(n,wm,span)=>{const [w,r]=dm(wm,span);return `<span>${n}</span><span class="v">${fm(w)}</span><span class="v" style="color:var(--neon-cyan)">${fm(r)}</span>`};
+  let h=`<div class="stat-card"><h5>⏱️ Media diaria</h5><div class="km-grid"><span class="h">Periodo</span><span class="h" style="text-align:right">Trabajo</span><span class="h" style="text-align:right">Descanso</span>`+
+    rowD('Esta semana',lw.wm,lw.span)+(lm?rowD('Este mes',lm.wm,lm.span):'')+rowD('Todo el registro',wAll,spanAll)+`</div></div>`;
+  h+=card('📅 Esta semana',lw.wm,lw.rm,lw.span,lw.n);
   if(lm)h+=card('🗓️ Este mes',lm.wm,lm.rm,lm.span,lm.n);
   h+=card('📊 Todo el registro',wAll,Math.max(0,spanAll-wAll),spanAll,iv.length);
   h+=`<div class="rules">La media diaria se calcula sobre los días ya transcurridos (mínimo 1), sin contar el tiempo que aún no ha pasado.</div>`;
