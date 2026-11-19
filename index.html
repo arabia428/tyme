@@ -281,6 +281,8 @@ box-shadow:inset 0 0 0 3px rgba(var(--st-rgb),.9),inset 0 0 22px 3px rgba(var(--
 .bottom-nav{background:linear-gradient(180deg,rgba(104,116,142,.96) 0,rgba(40,48,72,.97) 32%,rgba(14,18,32,.98) 100%);transform:translate3d(-50%,0,0)}
 .menu-btn{background:linear-gradient(155deg,rgba(255,255,255,.45) 0%,rgba(170,180,200,.24) 38%,rgba(40,46,64,.62) 100%),rgba(22,27,44,.55);transform:translateZ(0)}
 .menu-btn:active{transform:translateZ(0) scale(.92)}
+.menu-btn{border:none!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.8),inset 0 -3px 5px rgba(0,0,0,.5),inset 0 0 8px rgba(255,255,255,.12),0 7px 15px rgba(0,0,0,.6)!important}
+.menu-btn:active{box-shadow:inset 0 2px 6px rgba(0,0,0,.65),0 2px 5px rgba(0,0,0,.6)!important}
 #bg-layer{transform:translateZ(0)}
 .second-tick,.second-tick.tick-anim{animation:none;will-change:auto;filter:none}
 .timer-display,.timer-display span{font-variant-numeric:tabular-nums}
@@ -1700,6 +1702,8 @@ const css=`
 .dn-row{display:flex;justify-content:space-between;align-items:center;font-size:calc(12px * var(--fs))}
 .dn-text{width:100%;text-align:left;font-weight:normal;color:var(--text-light);resize:vertical;font-size:calc(13px * var(--fs))}
 .dn-item{background:rgba(0,0,0,.28);border-radius:8px;padding:6px 8px;font-size:calc(12px * var(--fs));display:flex;gap:8px;justify-content:space-between;align-items:flex-start;line-height:1.35}
+.dn-edit{display:block;width:100%;background:transparent;border:1px dashed transparent;border-radius:6px;color:var(--text-light);font-size:calc(12px * var(--fs));line-height:1.35;resize:none;overflow:hidden;padding:2px 4px;margin:0 -4px;-webkit-user-select:text;user-select:text}
+.dn-edit:focus{border-color:var(--neon-cyan);background:rgba(0,0,0,.2)}
 .dn-item small{display:block;color:var(--text-dim);font-size:calc(10px * var(--fs))}
 .dn-item button{background:none;border:none;color:var(--neon-red);font-size:16px;cursor:pointer}
 .km-grid{display:grid;grid-template-columns:1fr auto auto;gap:7px 14px;align-items:center;font-size:calc(13px * var(--fs))}
@@ -1731,7 +1735,6 @@ box.innerHTML=
  '<div class="dn-row"><label for="dn-km-end">Km final jornada</label><input id="dn-km-end" type="number" inputmode="decimal" min="0" step="1" class="form-input" style="width:110px" oninput="dnKm()"></div>'+
  '<div class="dn-row"><b>📝 Notas del día</b></div>'+
  '<textarea id="dn-text" class="form-input dn-text" rows="3" placeholder="¿Qué se ha hecho hoy?"></textarea>'+
- '<button class="btn-action btn-save btn-cyan" style="flex:none" onclick="dnAdd()">+ Añadir nota</button>'+
  '<div id="dn-list" style="display:flex;flex-direction:column;gap:6px"></div>';
 mb.insertBefore(box,mb.querySelector('.modal-actions'));
 window.renderDayNotes=function(k){
@@ -1742,8 +1745,9 @@ window.renderDayNotes=function(k){
   const km=dayKm(r);byId('dn-trip').textContent=km==null?'—':nk(km);
   byId('dn-list').innerHTML=(r.notes||[]).map((n,i)=>({n,i})).reverse().map(({n,i})=>{
     const d=new Date(n.ts);
-    return `<div class="dn-item"><div><small>${pad(d.getDate())}/${pad(d.getMonth()+1)} ${hm(d)}</small>${escapeHtml(n.text).replace(/\n/g,'<br>')}</div><button onclick="dnDel(${i})">✕</button></div>`;
+    return `<div class="dn-item"><div style="flex:1;min-width:0"><small>${pad(d.getDate())}/${pad(d.getMonth()+1)} ${hm(d)}${n.edited?' · editada':''}</small><textarea class="dn-edit" rows="1" oninput="dnEdit(${i},this)" onfocus="dnGrow(this)">${escapeHtml(n.text)}</textarea></div><button onclick="dnDel(${i})">✕</button></div>`;
   }).join('');
+  byId('dn-list').querySelectorAll('.dn-edit').forEach(dnGrow);
 };
 window.dnKm=function(){
   const k=state.activeEditingKey;if(!k)return;
@@ -1755,10 +1759,20 @@ window.dnAdd=function(){
   const k=state.activeEditingKey,t=byId('dn-text').value.trim();if(!k||!t)return;
   dnGet(k).notes.push({ts:Date.now(),text:t});saveStorageData();renderDayNotes(k);
 };
+window.dnGrow=function(el){el.style.height='auto';el.style.height=el.scrollHeight+'px'};
+window.dnEdit=function(i,el){
+  const k=state.activeEditingKey;if(!k||!state.dayNotes[k]||!state.dayNotes[k].notes[i])return;
+  dnGrow(el);
+  const n=state.dayNotes[k].notes[i];n.text=el.value;
+  if(!n.edited){n.edited=true;const sm=el.parentNode.querySelector('small');if(sm)sm.textContent+=' · editada'}
+  saveStorageData();
+};
 window.dnDel=function(i){
   const k=state.activeEditingKey;if(!k||!state.dayNotes[k])return;
   state.dayNotes[k].notes.splice(i,1);dnClean(k);saveStorageData();renderDayNotes(k);
 };
+const _ssd=saveShiftData;
+saveShiftData=function(){dnAdd();return _ssd.apply(this,arguments)};
 const _om=openModal;
 openModal=function(key,day,arr){_om(key,day,arr);renderDayNotes(key)};
 
