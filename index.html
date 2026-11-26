@@ -364,6 +364,10 @@ body[data-pg]:not([data-pg="1"]) .rest-ruler{display:none}
     <div id="weekdays-grid" class="weekdays-grid"><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div></div>
     <div id="calendar-days" class="days-grid"></div>
   </div>
+  <div class="history-controls" aria-label="Deshacer y rehacer">
+    <button id="history-undo" class="history-btn" type="button" onclick="historyUndo()" aria-label="Deshacer" title="Deshacer">↶</button>
+    <button id="history-redo" class="history-btn" type="button" onclick="historyRedo()" aria-label="Rehacer" title="Rehacer">↷</button>
+  </div>
 </div>
 
 <div id="page-2" class="page">
@@ -1763,9 +1767,9 @@ const css=`
 .km-grid{display:grid;grid-template-columns:1fr auto auto;gap:7px 14px;align-items:center;font-size:calc(13px * var(--fs))}
 .km-grid .h{font-size:calc(10px * var(--fs));color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px}
 .km-grid .v{text-align:right;font-weight:800;color:var(--neon-green);font-variant-numeric:tabular-nums}
-.km-grid .d{text-align:right;color:var(--text-dim);font-variant-numeric:tabular-nums}
-.dn-files{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.12)}.dn-file-count{font-size:11px;color:var(--text-dim)}.dn-file-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:8px 0}.dn-file-btn{margin:0!important;padding:10px 5px!important;width:100%;font-size:11px!important;line-height:1.25;background:rgba(5,217,232,.13)!important;border:1px solid rgba(5,217,232,.35)!important;color:var(--text-light)!important;border-radius:9px!important;text-transform:none!important;letter-spacing:0!important}.dn-files-list{display:flex;flex-direction:column;gap:8px}.dn-files-empty{display:block;color:var(--text-dim);font-size:11px;padding:7px 2px}.dn-file-item{display:flex;align-items:center;gap:9px;padding:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;min-width:0}.dn-file-thumb{width:48px;height:48px;flex:0 0 48px;object-fit:cover;border-radius:7px;background:rgba(0,0,0,.25)}.dn-file-icon{width:48px;height:48px;flex:0 0 48px;display:grid;place-items:center;font-size:25px;background:rgba(255,255,255,.07);border-radius:7px}.dn-file-info{flex:1;min-width:0}.dn-file-name{font-size:11px;overflow-wrap:anywhere;font-weight:600}.dn-file-meta{font-size:10px;color:var(--text-dim);margin-top:3px}.dn-file-acts{display:flex;flex-direction:column;gap:5px}.dn-file-acts button{margin:0!important;padding:5px 8px!important;width:auto!important;font-size:10px!important;border-radius:7px!important;text-transform:none!important;letter-spacing:0!important}.dn-file-open{background:rgba(5,217,232,.18)!important;color:var(--neon-cyan)!important}.dn-file-del{background:rgba(255,42,109,.14)!important;color:var(--neon-red)!important}`;
+.km-grid .d{text-align:right;color:var(--text-dim);font-variant-numeric:tabular-nums}`;
 const sty=document.createElement('style');sty.textContent=css;document.head.appendChild(sty);
+const historyStyle=document.createElement('style');historyStyle.textContent='\n.history-controls{display:flex;justify-content:center;gap:14px;margin:10px auto 18px}\n.history-btn{width:48px;height:40px;padding:0;margin:0;display:flex;align-items:center;justify-content:center;border-radius:14px;background:rgba(20,28,48,.28);border:1px solid rgba(255,255,255,.22);color:var(--text-light);font-size:27px;line-height:1;box-shadow:0 4px 12px rgba(0,0,0,.18);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:background .18s,transform .18s,opacity .18s}\n.history-btn:not(:disabled):active{transform:scale(.93);background:rgba(var(--accent-rgb),.22)}\n.history-btn:disabled{opacity:.28;cursor:default;box-shadow:none}\n';document.head.appendChild(historyStyle);
 
 /* ===== Datos: notas y km por día (misma clave que las jornadas) ===== */
 state.dayNotes={};
@@ -1790,7 +1794,7 @@ box.innerHTML=
  '<div class="dn-row"><label for="dn-km-end">Km final jornada</label><input id="dn-km-end" type="number" inputmode="decimal" min="0" step="1" class="form-input" style="width:110px" oninput="dnKm()"></div>'+
  '<div class="dn-row"><b>📝 Notas del día</b></div>'+
  '<textarea id="dn-text" class="form-input dn-text" rows="3" placeholder="¿Qué se ha hecho hoy?"></textarea>'+
- '<div id="dn-list" style="display:flex;flex-direction:column;gap:6px"></div>'+ '<div class="dn-files"><div class="dn-row"><b>📎 Fotos y documentos</b><span id="dn-files-count" class="dn-file-count">0 archivos</span></div>'+ '<div class="dn-file-actions"><button type="button" class="dn-file-btn" onclick="dnPickGallery()">🖼️ Galería</button><button type="button" class="dn-file-btn" onclick="dnTakePhoto()">📷 Hacer foto</button><button type="button" class="dn-file-btn" onclick="dnPickDocument()">📄 Documento</button></div>'+ '<input id="dn-gallery-input" type="file" accept="image/*" multiple hidden onchange="dnFilesSelected(this)">'+ '<input id="dn-camera-input" type="file" accept="image/*" capture="environment" hidden onchange="dnFilesSelected(this)">'+ '<input id="dn-document-input" type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" multiple hidden onchange="dnFilesSelected(this)">'+ '<div id="dn-files-list" class="dn-files-list"><small class="dn-files-empty">Todavía no hay archivos para este día.</small></div></div>';
+ '<div id="dn-list" style="display:flex;flex-direction:column;gap:6px"></div>';
 mb.insertBefore(box,mb.querySelector('.modal-actions'));
 window.renderDayNotes=function(k){
   const r=state.dayNotes[k]||{kmStart:null,kmEnd:null,notes:[]};
@@ -1888,77 +1892,6 @@ confirmDelete=function(){
   });
   saveStorageData();renderKmStats();
 };
-/* ===== Adjuntos diarios: IndexedDB (fotos, cámara y documentos) ===== */
-const DN_FILES_DB='tyme_day_files_v1',DN_FILES_STORE='attachments';
-let dnFilesDbPromise=null,dnFileUrls=[];
-function dnFilesDB(){
-  if(!('indexedDB' in window))return Promise.reject(new Error('Este navegador no permite guardar archivos.'));
-  if(!dnFilesDbPromise)dnFilesDbPromise=new Promise((resolve,reject)=>{
-    const req=indexedDB.open(DN_FILES_DB,1);
-    req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(DN_FILES_STORE))db.createObjectStore(DN_FILES_STORE,{keyPath:'id'})};
-    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||new Error('No se pudo abrir el almacenamiento'));
-  });
-  return dnFilesDbPromise;
-}
-function dnFileRequest(mode,action,value){
-  return dnFilesDB().then(db=>new Promise((resolve,reject)=>{
-    const tx=db.transaction(DN_FILES_STORE,mode),st=tx.objectStore(DN_FILES_STORE),req=action==='getAll'?st.getAll():action==='put'?st.put(value):action==='delete'?st.delete(value):st.clear();
-    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
-  }));
-}
-const dnFileEsc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const dnFileSize=n=>n<1024*1024?(n/1024).toFixed(0)+' KB':(n/1024/1024).toFixed(1)+' MB';
-window.dnPickGallery=()=>byId('dn-gallery-input').click();
-window.dnTakePhoto=()=>byId('dn-camera-input').click();
-window.dnPickDocument=()=>byId('dn-document-input').click();
-window.dnFilesSelected=async function(input){
-  const files=Array.from(input.files||[]),day=state.activeEditingKey;input.value='';if(!files.length||!day)return;
-  const valid=files.filter(f=>f.type.startsWith('image/')||['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','text/plain'].includes(f.type));
-  if(valid.length!==files.length)alert('Se han omitido archivos con formatos no compatibles.');
-  if(valid.some(f=>f.size>25*1024*1024)){alert('Cada archivo debe ocupar como máximo 25 MB.');return}
-  try{
-    const all=await dnFileRequest('readonly','getAll'),existing=all.filter(x=>x.day===day).length;
-    if(existing+valid.length>30){alert('Puedes guardar hasta 30 archivos por día.');return}
-    for(const f of valid){await dnFileRequest('readwrite','put',{id:day+'_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2),day,name:f.name,type:f.type||'application/octet-stream',size:f.size,createdAt:Date.now(),blob:f})}
-    await dnRenderFiles(day);
-  }catch(e){console.error(e);alert('No se pudo guardar el archivo. Comprueba el espacio disponible del navegador.')}
-};
-window.dnRenderFiles=async function(day){
-  const list=byId('dn-files-list'),count=byId('dn-files-count');if(!list||!count)return;
-  dnFileUrls.forEach(u=>URL.revokeObjectURL(u));dnFileUrls=[];
-  try{
-    const all=await dnFileRequest('readonly','getAll'),items=all.filter(x=>x.day===day).sort((a,b)=>a.createdAt-b.createdAt);
-    count.textContent=items.length+' archivo'+(items.length===1?'':'s');
-    if(!items.length){list.innerHTML='<small class="dn-files-empty">Todavía no hay archivos para este día.</small>';return}
-    list.innerHTML=items.map(x=>{
-      const url=URL.createObjectURL(x.blob);dnFileUrls.push(url);
-      const img=x.type.startsWith('image/');
-      return `<div class="dn-file-item">${img?`<img class="dn-file-thumb" src="${url}" alt="">`:'<div class="dn-file-icon">📄</div>'}<div class="dn-file-info"><div class="dn-file-name">${dnFileEsc(x.name)}</div><div class="dn-file-meta">${dnFileSize(x.size)} · ${new Date(x.createdAt).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</div></div><div class="dn-file-acts"><button type="button" class="dn-file-open" onclick="dnOpenFile('${x.id}')">Abrir</button><button type="button" class="dn-file-del" onclick="dnDeleteFile('${x.id}')">Borrar</button></div></div>`;
-    }).join('');
-  }catch(e){list.innerHTML='<small class="dn-files-empty">No se pudieron cargar los archivos guardados.</small>';console.error(e)}
-};
-window.dnOpenFile=async function(id){
-  try{const all=await dnFileRequest('readonly','getAll'),f=all.find(x=>x.id===id);if(!f)return;const url=URL.createObjectURL(f.blob),a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}catch(e){alert('No se pudo abrir el archivo.')}
-};
-window.dnDeleteFile=async function(id){
-  if(!confirm('¿Borrar este archivo?'))return;
-  try{const all=await dnFileRequest('readonly','getAll'),f=all.find(x=>x.id===id);await dnFileRequest('readwrite','delete',id);if(f)await dnRenderFiles(f.day)}catch(e){alert('No se pudo borrar el archivo.')}
-};
-async function dnDeleteFilesForDay(day){const all=await dnFileRequest('readonly','getAll');for(const f of all)if(f.day===day)await dnFileRequest('readwrite','delete',f.id)}
-async function dnDeleteFilesInRange(range){const all=await dnFileRequest('readonly','getAll');for(const f of all){const [y,m,d]=f.day.split('-').map(Number),t=new Date(y,m,d).getTime();if(t>=range.a&&t<range.b)await dnFileRequest('readwrite','delete',f.id)}}
-const _dnConfirmDelete=confirmDelete;
-confirmDelete=function(){
-  const armed=state.delArmed,r=delRange();
-  _dnConfirmDelete();
-  if(!armed||!r)return;
-  if(r.sc==='all')dnFileRequest('readwrite','clear').catch(e=>console.error(e));
-  else dnDeleteFilesInRange(r).catch(e=>console.error(e));
-};
-const _dnRenderDayNotes=window.renderDayNotes;
-window.renderDayNotes=function(k){_dnRenderDayNotes(k);dnRenderFiles(k)};
-const _dnForceClose=forceCloseModal;
-forceCloseModal=function(){dnFileUrls.forEach(u=>URL.revokeObjectURL(u));dnFileUrls=[];_dnForceClose()};
-
 const _dp=updateDeletePreview;
 updateDeletePreview=function(){
   _dp();
@@ -2015,6 +1948,81 @@ renderKmStats();
   switchPage=function(n){_sw(n);if(n===5)refresca()};
   const _sh=showPage;
   showPage=function(id){_sh(id);if(id==='calc')aplicaEscala()};
+})();
+</script>
+<script>
+/* ===== Historial de cambios: 10 pasos, deshacer / rehacer ===== */
+(function(){
+  const undoStack=[],redoStack=[],LIMIT=10;
+  let lastSnapshot=null,restoring=false,commitTimer=null;
+  const clone=o=>JSON.parse(JSON.stringify(o));
+  function readSnapshot(){
+    let data=null,settings=null,bg=null;
+    try{data=JSON.parse(store.get(STORAGE_KEY)||'null')}catch(e){}
+    try{settings=JSON.parse(store.get(SETTINGS_KEY)||'null')}catch(e){}
+    try{bg=JSON.parse(store.get(BG_KEY)||'null')}catch(e){}
+    if(data&&data.workedLogs){
+      Object.keys(data.workedLogs).forEach(k=>{
+        const l=data.workedLogs[k];
+        if(l&&l.active){data.workedLogs[k]={active:true,start:l.start,nightRate:l.nightRate};}
+      });
+    }
+    return JSON.stringify({data,settings,bg});
+  }
+  function updateButtons(){
+    const u=document.getElementById('history-undo'),r=document.getElementById('history-redo');
+    if(u)u.disabled=!undoStack.length;
+    if(r)r.disabled=!redoStack.length;
+  }
+  function commit(){
+    if(restoring)return;
+    const now=readSnapshot();
+    if(lastSnapshot===null){lastSnapshot=now;updateButtons();return;}
+    if(now===lastSnapshot){updateButtons();return;}
+    undoStack.push(lastSnapshot);if(undoStack.length>LIMIT)undoStack.shift();
+    redoStack.length=0;lastSnapshot=now;updateButtons();
+  }
+  function scheduleCommit(){
+    if(restoring)return;
+    clearTimeout(commitTimer);commitTimer=setTimeout(commit,350);
+  }
+  function restore(raw){
+    if(!raw)return;
+    restoring=true;clearTimeout(commitTimer);
+    try{
+      const snap=JSON.parse(raw);
+      if(snap.data)store.set(STORAGE_KEY,JSON.stringify(snap.data));else store.set(STORAGE_KEY,'');
+      if(snap.settings)store.set(SETTINGS_KEY,JSON.stringify(snap.settings));else store.set(SETTINGS_KEY,'');
+      if(snap.bg)store.set(BG_KEY,JSON.stringify(snap.bg));else store.set(BG_KEY,'');
+      loadStorageData();
+      state.dayNotes=snap.data&&snap.data.dayNotes?clone(snap.data.dayNotes):{};
+      loadSettings();applyAppearance();loadBackground();
+      if(state.isWorking)setWorkingUI(true);else setWorkingUI(false);
+      afterChange();renderKmStats();renderAnnualOverview();renderStats();
+      lastSnapshot=readSnapshot();
+    }catch(e){console.error('No se pudo restaurar el historial:',e)}
+    restoring=false;updateButtons();
+  }
+  window.historyUndo=function(){
+    if(!undoStack.length)return;
+    const current=readSnapshot();redoStack.push(current);if(redoStack.length>LIMIT)redoStack.shift();
+    restore(undoStack.pop());
+  };
+  window.historyRedo=function(){
+    if(!redoStack.length)return;
+    const current=readSnapshot();undoStack.push(current);if(undoStack.length>LIMIT)undoStack.shift();
+    restore(redoStack.pop());
+  };
+  const oldSave=saveStorageData;
+  saveStorageData=function(){oldSave.apply(this,arguments);scheduleCommit()};
+  const oldSettings=saveSettings;
+  saveSettings=function(){oldSettings.apply(this,arguments);scheduleCommit()};
+  const oldBg=saveBackground;
+  if(typeof oldBg==='function')saveBackground=function(){const v=oldBg.apply(this,arguments);scheduleCommit();return v};
+  const oldBgPage=saveBgPage;
+  if(typeof oldBgPage==='function')saveBgPage=function(){const v=oldBgPage.apply(this,arguments);scheduleCommit();return v};
+  document.addEventListener('DOMContentLoaded',function(){lastSnapshot=readSnapshot();updateButtons()},{once:true});
+  if(document.readyState!=='loading'){lastSnapshot=readSnapshot();updateButtons()}
 })();
 </script>
 </body>
